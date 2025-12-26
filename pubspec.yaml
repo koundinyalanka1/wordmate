@@ -1,7 +1,7 @@
 name: wordmate
-description: "A new Flutter project."
+description: "A beautiful dictionary app to explore words, save favorites, and expand your vocabulary."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0
 
 environment:
   sdk: ^3.10.4
@@ -9,6 +9,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # HTTP client for API calls
+  http: ^1.2.0
+  
+  # Local storage for favorites and history
+  shared_preferences: ^2.2.2
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Audio playback for pronunciation
+  audioplayers: ^6.0.0
+  
+  # Google Fonts for beautiful typography
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
