@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(width: 14),
                           Text(
-                            'WordMate',
+                            'Word Mate',
                             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                               color: colors.textPrimary,
                             ),

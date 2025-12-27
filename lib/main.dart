@@ -37,7 +37,7 @@ class WordMateApp extends StatelessWidget {
           );
 
           return MaterialApp(
-            title: 'WordMate',
+            title: 'Word Mate',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                     const SizedBox(height: 32),
                     // App name
                     Text(
-                      'WordMate',
+                      'Word Mate',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         color: colors.textPrimary,
                       ),

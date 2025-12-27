@@ -153,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'WordMate',
+                                      'Word Mate',
                                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                         color: colors.textPrimary,
                                       ),
@@ -177,7 +177,33 @@ class SettingsScreen extends StatelessWidget {
                               color: colors.textSecondary,
                             ),
                           ),
+                          const SizedBox(height: 20),
+                          Divider(color: colors.surfaceLight, height: 1),
                           const SizedBox(height: 16),
+                          
+                          // Developer info
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.code_rounded,
+                                size: 16,
+                                color: colors.accent,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Developed by Your Mate Apps',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: colors.textPrimary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // API info
                           Row(
                             children: [
                               Icon(
@@ -189,6 +215,27 @@ class SettingsScreen extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   'Powered by Free Dictionary API',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: colors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Version info
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 16,
+                                color: colors.textMuted,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Version 1.0.0 • Build 1',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: colors.textMuted,
                                   ),
