@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/dictionary_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/game_settings_provider.dart';
 import 'screens/main_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -20,6 +21,7 @@ class WordMateApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => DictionaryProvider()..init()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+        ChangeNotifierProvider(create: (_) => GameSettingsProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

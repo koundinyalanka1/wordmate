@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/game_settings_provider.dart';
 import '../services/dictionary_service.dart';
 import '../services/word_list_service.dart';
 import '../theme/app_theme.dart';
@@ -67,24 +69,37 @@ class _HangmanScreenState extends State<HangmanScreen> {
       _showClue = false;
     });
 
-    // Get a random word that's good for hangman (4-8 letters, no spaces/hyphens/symbols)
+    // Get difficulty settings
+    final difficulty = context.read<GameSettingsProvider>().difficulty;
+    final minLength = difficulty.minLength;
+    final maxLength = difficulty.maxLength;
+
+    // Get a random word based on difficulty
     String word = '';
     String? clue;
     
     // Try to find a word with a valid definition
     for (int attempt = 0; attempt < 10; attempt++) {
-      for (int i = 0; i < 20; i++) {
+      for (int i = 0; i < 30; i++) {
         final candidate = _wordListService.getRandomWord();
-        if (candidate.length >= 4 && 
-            candidate.length <= 8 && 
+        if (candidate.length >= minLength && 
+            candidate.length <= maxLength && 
             RegExp(r'^[a-zA-Z]+$').hasMatch(candidate)) {
           word = candidate.toLowerCase();
           break;
         }
       }
       
+      // Fallback words based on difficulty
       if (word.isEmpty) {
-        word = 'flutter';
+        switch (difficulty) {
+          case HangmanDifficulty.easy:
+            word = 'word';
+          case HangmanDifficulty.medium:
+            word = 'flutter';
+          case HangmanDifficulty.hard:
+            word = 'developer';
+        }
       }
 
       // Try to fetch definition
@@ -277,21 +292,52 @@ class _HangmanScreenState extends State<HangmanScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Guess the word letter by letter',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              Text(
-                                '$_gamesPlayed games played',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: colors.textMuted,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 12),
+                          Consumer<GameSettingsProvider>(
+                            builder: (context, gameSettings, _) {
+                              return Row(
+                                children: [
+                                  // Difficulty badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: colors.surfaceLight,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          gameSettings.difficulty.icon,
+                                          size: 14,
+                                          color: colors.textMuted,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          gameSettings.difficulty.displayName,
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: colors.textMuted,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '•',
+                                    style: TextStyle(color: colors.textMuted),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '$_gamesPlayed games played',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),

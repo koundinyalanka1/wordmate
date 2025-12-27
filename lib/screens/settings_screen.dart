@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/game_settings_provider.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -10,6 +11,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final themeProvider = context.watch<ThemeProvider>();
+    final gameSettings = context.watch<GameSettingsProvider>();
 
     return Scaffold(
       body: SafeArea(
@@ -103,6 +105,61 @@ class SettingsScreen extends StatelessWidget {
                             subtitle: 'Easy on the eyes',
                             isSelected: themeProvider.isDarkMode,
                             onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
+                            colors: colors,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Game settings section
+                    Text(
+                      'HANGMAN DIFFICULTY',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.accent,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colors.surfaceLight,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _DifficultyOption(
+                            difficulty: HangmanDifficulty.easy,
+                            isSelected: gameSettings.difficulty == HangmanDifficulty.easy,
+                            onTap: () => gameSettings.setDifficulty(HangmanDifficulty.easy),
+                            colors: colors,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: colors.surfaceLight,
+                            indent: 68,
+                          ),
+                          _DifficultyOption(
+                            difficulty: HangmanDifficulty.medium,
+                            isSelected: gameSettings.difficulty == HangmanDifficulty.medium,
+                            onTap: () => gameSettings.setDifficulty(HangmanDifficulty.medium),
+                            colors: colors,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: colors.surfaceLight,
+                            indent: 68,
+                          ),
+                          _DifficultyOption(
+                            difficulty: HangmanDifficulty.hard,
+                            isSelected: gameSettings.difficulty == HangmanDifficulty.hard,
+                            onTap: () => gameSettings.setDifficulty(HangmanDifficulty.hard),
                             colors: colors,
                           ),
                         ],
@@ -344,3 +401,85 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
+class _DifficultyOption extends StatelessWidget {
+  final HangmanDifficulty difficulty;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final AppColors colors;
+
+  const _DifficultyOption({
+    required this.difficulty,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colors.accent.withValues(alpha: 0.15)
+                    : colors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                difficulty.icon,
+                color: isSelected ? colors.accent : colors.textMuted,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    difficulty.displayName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    difficulty.description,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? colors.accent : colors.textMuted,
+                  width: 2,
+                ),
+                color: isSelected ? colors.accent : Colors.transparent,
+              ),
+              child: isSelected
+                  ? Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: colors.background,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
