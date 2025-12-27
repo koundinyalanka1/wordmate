@@ -16,13 +16,15 @@ class MeaningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.surfaceLight,
+          color: colors.surfaceLight,
           width: 1,
         ),
       ),
@@ -41,7 +43,7 @@ class MeaningCard extends StatelessWidget {
                 child: Text(
                   meaning.partOfSpeech.toUpperCase(),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppTheme.background,
+                    color: colors.background,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1,
                   ),
@@ -72,13 +74,13 @@ class MeaningCard extends StatelessWidget {
                         height: 24,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppTheme.surfaceLight,
+                          color: colors.surfaceLight,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           '${defIndex + 1}',
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
@@ -99,11 +101,11 @@ class MeaningCard extends StatelessWidget {
                       margin: const EdgeInsets.only(left: 36),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceLight.withValues(alpha: 0.5),
+                        color: colors.surfaceLight.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                         border: Border(
                           left: BorderSide(
-                            color: AppTheme.accent.withValues(alpha: 0.5),
+                            color: colors.accent.withValues(alpha: 0.5),
                             width: 3,
                           ),
                         ),
@@ -114,7 +116,7 @@ class MeaningCard extends StatelessWidget {
                           Icon(
                             Icons.format_quote_rounded,
                             size: 16,
-                            color: AppTheme.accent.withValues(alpha: 0.7),
+                            color: colors.accent.withValues(alpha: 0.7),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -122,7 +124,7 @@ class MeaningCard extends StatelessWidget {
                               '"${definition.example}"',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 fontStyle: FontStyle.italic,
-                                color: AppTheme.textSecondary,
+                                color: colors.textSecondary,
                               ),
                             ),
                           ),
@@ -138,10 +140,11 @@ class MeaningCard extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 36),
                       child: _buildWordChips(
                         context,
+                        colors,
                         'Similar',
                         definition.synonyms,
-                        AppTheme.accent.withValues(alpha: 0.15),
-                        AppTheme.accent,
+                        colors.accent.withValues(alpha: 0.15),
+                        colors.accent,
                       ),
                     ),
                   ],
@@ -153,14 +156,15 @@ class MeaningCard extends StatelessWidget {
           // Meaning-level synonyms
           if (meaning.synonyms.isNotEmpty) ...[
             const SizedBox(height: 20),
-            const Divider(color: AppTheme.surfaceLight),
+            Divider(color: colors.surfaceLight),
             const SizedBox(height: 16),
             _buildWordChips(
               context,
+              colors,
               'Synonyms',
               meaning.synonyms,
-              AppTheme.accent.withValues(alpha: 0.15),
-              AppTheme.accent,
+              colors.accent.withValues(alpha: 0.15),
+              colors.accent,
             ),
           ],
 
@@ -169,10 +173,11 @@ class MeaningCard extends StatelessWidget {
             const SizedBox(height: 16),
             _buildWordChips(
               context,
+              colors,
               'Antonyms',
               meaning.antonyms,
-              AppTheme.error.withValues(alpha: 0.15),
-              AppTheme.error,
+              colors.error.withValues(alpha: 0.15),
+              colors.error,
             ),
           ],
         ],
@@ -182,6 +187,7 @@ class MeaningCard extends StatelessWidget {
 
   Widget _buildWordChips(
     BuildContext context,
+    AppColors colors,
     String label,
     List<String> words,
     Color bgColor,
@@ -193,7 +199,7 @@ class MeaningCard extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppTheme.textMuted,
+            color: colors.textMuted,
           ),
         ),
         const SizedBox(height: 8),
@@ -224,4 +230,3 @@ class MeaningCard extends StatelessWidget {
     );
   }
 }
-

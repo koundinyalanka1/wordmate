@@ -19,30 +19,34 @@ class WordDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
     final provider = context.watch<DictionaryProvider>();
     final isFavorite = provider.isFavoriteSync(entry.word);
 
     return Container(
       decoration: BoxDecoration(
         gradient: showWordOfDayBadge
-            ? const LinearGradient(
-                colors: [Color(0xFF2A2015), Color(0xFF1A1510)],
+            ? LinearGradient(
+                colors: [
+                  colors.accent.withValues(alpha: 0.15),
+                  colors.accent.withValues(alpha: 0.05),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
-        color: showWordOfDayBadge ? null : AppTheme.surface,
+        color: showWordOfDayBadge ? null : colors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: showWordOfDayBadge
-              ? AppTheme.accent.withValues(alpha: 0.3)
-              : AppTheme.surfaceLight,
+              ? colors.accent.withValues(alpha: 0.3)
+              : colors.surfaceLight,
           width: 1,
         ),
         boxShadow: showWordOfDayBadge
             ? [
                 BoxShadow(
-                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  color: colors.accent.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -66,22 +70,22 @@ class WordDetailCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withValues(alpha: 0.2),
+                          color: colors.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.auto_awesome,
-                              color: AppTheme.accent,
+                              color: colors.accent,
                               size: 14,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'WORD OF THE DAY',
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppTheme.accent,
+                                color: colors.accent,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -101,12 +105,12 @@ class WordDetailCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: AppTheme.accent.withValues(alpha: 0.15),
+                                color: colors.accent.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.volume_up_rounded,
-                                color: AppTheme.accent,
+                                color: colors.accent,
                                 size: 20,
                               ),
                             ),
@@ -119,15 +123,15 @@ class WordDetailCard extends StatelessWidget {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: isFavorite
-                                  ? AppTheme.accent.withValues(alpha: 0.2)
-                                  : AppTheme.surfaceLight,
+                                  ? colors.accent.withValues(alpha: 0.2)
+                                  : colors.surfaceLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               isFavorite
                                   ? Icons.bookmark_rounded
                                   : Icons.bookmark_border_rounded,
-                              color: isFavorite ? AppTheme.accent : AppTheme.textSecondary,
+                              color: isFavorite ? colors.accent : colors.textSecondary,
                               size: 20,
                             ),
                           ),
@@ -142,7 +146,7 @@ class WordDetailCard extends StatelessWidget {
                 Text(
                   entry.word,
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: AppTheme.accent,
+                    color: colors.accent,
                   ),
                 ),
 
@@ -153,7 +157,7 @@ class WordDetailCard extends StatelessWidget {
                     entry.displayPhonetic,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontStyle: FontStyle.italic,
-                      color: AppTheme.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -164,18 +168,18 @@ class WordDetailCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceLight.withValues(alpha: 0.5),
+                      color: colors.surfaceLight.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppTheme.accent.withValues(alpha: 0.2),
+                        color: colors.accent.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.history_edu_rounded,
-                          color: AppTheme.accent,
+                          color: colors.accent,
                           size: 18,
                         ),
                         const SizedBox(width: 12),
@@ -186,7 +190,7 @@ class WordDetailCard extends StatelessWidget {
                               Text(
                                 'ORIGIN',
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: AppTheme.accent,
+                                  color: colors.accent,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -231,4 +235,3 @@ class WordDetailCard extends StatelessWidget {
     );
   }
 }
-

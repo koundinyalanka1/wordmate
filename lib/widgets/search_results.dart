@@ -17,10 +17,13 @@ class SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     // Not found state
     if (provider.searchState == SearchState.notFound) {
       return _buildEmptyState(
         context,
+        colors,
         icon: Icons.search_off_rounded,
         title: 'Word not found',
         subtitle: provider.errorMessage,
@@ -31,6 +34,7 @@ class SearchResults extends StatelessWidget {
     if (provider.searchState == SearchState.error) {
       return _buildEmptyState(
         context,
+        colors,
         icon: Icons.error_outline_rounded,
         title: 'Oops!',
         subtitle: provider.errorMessage,
@@ -57,12 +61,12 @@ class SearchResults extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.15),
+                      color: colors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check_circle_rounded,
-                      color: AppTheme.accent,
+                      color: colors.accent,
                       size: 18,
                     ),
                   ),
@@ -78,7 +82,7 @@ class SearchResults extends StatelessWidget {
                 icon: const Icon(Icons.close_rounded, size: 18),
                 label: const Text('Clear'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textMuted,
+                  foregroundColor: colors.textMuted,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
@@ -104,7 +108,8 @@ class SearchResults extends StatelessWidget {
   }
 
   Widget _buildEmptyState(
-    BuildContext context, {
+    BuildContext context,
+    AppColors colors, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -120,23 +125,23 @@ class SearchResults extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: isError
-                    ? AppTheme.error.withValues(alpha: 0.1)
-                    : AppTheme.surface,
+                    ? colors.error.withValues(alpha: 0.1)
+                    : colors.surface,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 48,
                 color: isError
-                    ? AppTheme.error.withValues(alpha: 0.7)
-                    : AppTheme.textMuted.withValues(alpha: 0.5),
+                    ? colors.error.withValues(alpha: 0.7)
+                    : colors.textMuted.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppTheme.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -144,7 +149,7 @@ class SearchResults extends StatelessWidget {
               subtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textMuted,
+                color: colors.textMuted,
               ),
             ),
             const SizedBox(height: 24),
@@ -153,7 +158,7 @@ class SearchResults extends StatelessWidget {
               icon: const Icon(Icons.arrow_back_rounded, size: 18),
               label: const Text('Go back'),
               style: TextButton.styleFrom(
-                foregroundColor: AppTheme.accent,
+                foregroundColor: colors.accent,
               ),
             ),
           ],

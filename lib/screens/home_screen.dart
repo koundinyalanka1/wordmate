@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/search_bar_widget.dart';
-import '../widgets/word_of_day_card.dart';
 import '../widgets/history_section.dart';
 import '../widgets/search_results.dart';
 
@@ -54,6 +53,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Scaffold(
       body: SafeArea(
         child: FadeTransition(
@@ -75,9 +76,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               gradient: AppTheme.accentGradient,
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.menu_book_rounded,
-                              color: AppTheme.background,
+                              color: colors.background,
                               size: 26,
                             ),
                           ),
@@ -85,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           Text(
                             'WordMate',
                             style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                              color: AppTheme.textPrimary,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ],
@@ -116,11 +117,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Consumer<DictionaryProvider>(
                 builder: (context, provider, _) {
                   if (provider.searchState == SearchState.loading) {
-                    return const SliverFillRemaining(
+                    return SliverFillRemaining(
                       hasScrollBody: false,
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: AppTheme.accent,
+                          color: colors.accent,
                           strokeWidth: 2,
                         ),
                       ),
@@ -139,25 +140,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     );
                   }
 
-                  // Default: show word of the day and history
+                  // Default: show history or empty state
                   return SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Word of the Day
-                        if (provider.wordOfTheDay != null)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                            child: WordOfDayCard(
-                              entry: provider.wordOfTheDay!,
-                              onWordTap: _onSearch,
-                            ),
-                          ),
-
                         // Recent searches
                         if (provider.history.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                             child: HistorySection(
                               history: provider.history,
                               onWordTap: (word) {
@@ -174,22 +165,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
 
                         // Empty state
-                        if (provider.history.isEmpty && provider.wordOfTheDay == null)
+                        if (provider.history.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(48),
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(
-                                    Icons.search_rounded,
-                                    size: 64,
-                                    color: AppTheme.textMuted.withValues(alpha: 0.5),
+                                  Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: colors.surface,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.search_rounded,
+                                      size: 48,
+                                      color: colors.textMuted.withValues(alpha: 0.5),
+                                    ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 24),
                                   Text(
                                     'Search for any word',
-                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: AppTheme.textMuted,
+                                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Type a word above to get its\ndefinition, pronunciation & more',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: colors.textMuted,
                                     ),
                                   ),
                                 ],

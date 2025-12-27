@@ -4,10 +4,10 @@ import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/word_detail_card.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class WordOfDayScreen extends StatelessWidget {
   final Function(String)? onWordTap;
 
-  const FavoritesScreen({super.key, this.onWordTap});
+  const WordOfDayScreen({super.key, this.onWordTap});
 
   @override
   Widget build(BuildContext context) {
@@ -31,18 +31,18 @@ class FavoritesScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: colors.accent.withValues(alpha: 0.15),
+                                gradient: AppTheme.accentGradient,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
-                                Icons.bookmark_rounded,
-                                color: colors.accent,
+                                Icons.auto_awesome,
+                                color: colors.background,
                                 size: 26,
                               ),
                             ),
                             const SizedBox(width: 14),
                             Text(
-                              'Saved Words',
+                              'Word of the Day',
                               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                                 color: colors.textPrimary,
                               ),
@@ -51,9 +51,7 @@ class FavoritesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          provider.favorites.isEmpty
-                              ? 'Your saved words will appear here'
-                              : '${provider.favorites.length} word${provider.favorites.length == 1 ? '' : 's'} saved',
+                          'Expand your vocabulary daily',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -61,8 +59,33 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Empty state
-                if (provider.favorites.isEmpty)
+                // Word of the Day content
+                if (provider.wordOfTheDay != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
+                      child: WordDetailCard(
+                        entry: provider.wordOfTheDay!,
+                        showWordOfDayBadge: true,
+                        onWordTap: onWordTap,
+                      ),
+                    ),
+                  ),
+
+                // Loading state
+                if (provider.wordOfTheDay == null && !provider.isInitialized)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: colors.accent,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+
+                // Error state
+                if (provider.wordOfTheDay == null && provider.isInitialized)
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(
@@ -78,21 +101,21 @@ class FavoritesScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                Icons.bookmark_border_rounded,
+                                Icons.cloud_off_rounded,
                                 size: 48,
                                 color: colors.textMuted.withValues(alpha: 0.5),
                               ),
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              'No saved words yet',
+                              'Unable to load',
                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: colors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Tap the bookmark icon when viewing\na word to save it here',
+                              'Check your internet connection\nand try again',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: colors.textMuted,
@@ -100,27 +123,6 @@ class FavoritesScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-
-                // Favorites list - full detail cards
-                if (provider.favorites.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final entry = provider.favorites[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: WordDetailCard(
-                              entry: entry,
-                              onWordTap: onWordTap,
-                            ),
-                          );
-                        },
-                        childCount: provider.favorites.length,
                       ),
                     ),
                   ),
@@ -132,3 +134,4 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 }
+

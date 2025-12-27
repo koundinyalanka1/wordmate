@@ -17,6 +17,8 @@ class HistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -28,7 +30,7 @@ class HistorySection extends StatelessWidget {
               children: [
                 Icon(
                   Icons.history_rounded,
-                  color: AppTheme.textSecondary,
+                  color: colors.textSecondary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -46,7 +48,7 @@ class HistorySection extends StatelessWidget {
               child: Text(
                 'Clear all',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.accent,
+                  color: colors.accent,
                 ),
               ),
             ),
@@ -64,10 +66,10 @@ class HistorySection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppTheme.surface,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppTheme.surfaceLight,
+                    color: colors.surfaceLight,
                     width: 1,
                   ),
                 ),
@@ -77,7 +79,7 @@ class HistorySection extends StatelessWidget {
                     Text(
                       word,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -86,7 +88,7 @@ class HistorySection extends StatelessWidget {
                       child: Icon(
                         Icons.close_rounded,
                         size: 16,
-                        color: AppTheme.textMuted,
+                        color: colors.textMuted,
                       ),
                     ),
                   ],
@@ -99,4 +101,3 @@ class HistorySection extends StatelessWidget {
     );
   }
 }
-

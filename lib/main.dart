@@ -2,22 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/dictionary_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/main_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Set system UI overlay style for dark theme
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppTheme.surface,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-
   runApp(const WordMateApp());
 }
 
@@ -26,13 +16,35 @@ class WordMateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DictionaryProvider()..init(),
-      child: MaterialApp(
-        title: 'WordMate',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        home: const SplashScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DictionaryProvider()..init()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          // Update system UI based on theme
+          final isDark = themeProvider.themeMode == ThemeMode.dark;
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+              systemNavigationBarColor: isDark 
+                  ? const Color(0xFF1A1A1A) 
+                  : const Color(0xFFFFFFFF),
+              systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            ),
+          );
+
+          return MaterialApp(
+            title: 'WordMate',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }
@@ -78,15 +90,16 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToHome() async {
-    // Wait for provider to initialize
+    // Wait for providers to initialize
     await Future.delayed(const Duration(milliseconds: 500));
     
     if (!mounted) return;
     
-    final provider = context.read<DictionaryProvider>();
+    final dictProvider = context.read<DictionaryProvider>();
+    final themeProvider = context.read<ThemeProvider>();
     
-    // Wait until provider is initialized
-    while (!provider.isInitialized) {
+    // Wait until providers are initialized
+    while (!dictProvider.isInitialized || !themeProvider.isInitialized) {
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
     }
@@ -119,8 +132,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>() ?? AppColors.dark;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
@@ -140,15 +155,15 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.accent.withValues(alpha: 0.3),
+                            color: colors.accent.withValues(alpha: 0.3),
                             blurRadius: 30,
                             offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.menu_book_rounded,
-                        color: AppTheme.background,
+                        color: colors.background,
                         size: 56,
                       ),
                     ),
@@ -157,14 +172,14 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'WordMate',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        color: AppTheme.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Explore the beauty of words',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],

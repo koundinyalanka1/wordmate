@@ -34,14 +34,16 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.surfaceLight, width: 1),
+        border: Border.all(color: colors.surfaceLight, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -58,7 +60,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             padding: const EdgeInsets.only(left: 16, right: 12),
             child: Icon(
               Icons.search_rounded,
-              color: AppTheme.textMuted,
+              color: colors.textMuted,
               size: 24,
             ),
           ),
@@ -69,12 +71,12 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                     icon: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceLight,
+                        color: colors.surfaceLight,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close_rounded,
-                        color: AppTheme.textSecondary,
+                        color: colors.textSecondary,
                         size: 16,
                       ),
                     ),
@@ -91,4 +93,3 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     );
   }
 }
-
