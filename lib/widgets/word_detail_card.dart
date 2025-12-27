@@ -21,7 +21,6 @@ class WordDetailCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final provider = context.watch<DictionaryProvider>();
-    final isFavorite = provider.isFavoriteSync(entry.word);
 
     return Container(
       decoration: BoxDecoration(
@@ -95,49 +94,23 @@ class WordDetailCard extends StatelessWidget {
                     else
                       const SizedBox.shrink(),
                     
-                    // Action buttons
-                    Row(
-                      children: [
-                        // Audio button
-                        if (entry.audioUrl != null)
-                          GestureDetector(
-                            onTap: () => provider.playPronunciation(entry.audioUrl),
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: colors.accent.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.volume_up_rounded,
-                                color: colors.accent,
-                                size: 20,
-                              ),
-                            ),
+                    // Audio button only
+                    if (entry.audioUrl != null)
+                      GestureDetector(
+                        onTap: () => provider.playPronunciation(entry.audioUrl),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        const SizedBox(width: 8),
-                        // Bookmark button
-                        GestureDetector(
-                          onTap: () => provider.toggleFavorite(entry),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isFavorite
-                                  ? colors.accent.withValues(alpha: 0.2)
-                                  : colors.surfaceLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              isFavorite
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              color: isFavorite ? colors.accent : colors.textSecondary,
-                              size: 20,
-                            ),
+                          child: Icon(
+                            Icons.volume_up_rounded,
+                            color: colors.accent,
+                            size: 20,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 20),

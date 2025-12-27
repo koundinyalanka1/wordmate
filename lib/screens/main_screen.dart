@@ -4,7 +4,7 @@ import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'word_of_day_screen.dart';
-import 'favorites_screen.dart';
+import 'hangman_screen.dart';
 import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           const HomeScreen(),
           WordOfDayScreen(onWordTap: _searchWord),
-          FavoritesScreen(onWordTap: _searchWord),
+          const HangmanScreen(),
           const SettingsScreen(),
         ],
       ),
@@ -69,8 +69,8 @@ class _MainScreenState extends State<MainScreen> {
                   colors: colors,
                 ),
                 _NavBarItem(
-                  icon: Icons.bookmark_rounded,
-                  label: 'Saved',
+                  icon: Icons.games_rounded,
+                  label: 'Game',
                   isSelected: _currentIndex == 2,
                   onTap: () => setState(() => _currentIndex = 2),
                   colors: colors,
