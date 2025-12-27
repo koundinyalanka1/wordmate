@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/word_list_tile.dart';
-import 'word_detail_screen.dart';
+import '../widgets/word_detail_card.dart';
 
 class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({super.key});
+  final Function(String)? onWordTap;
+
+  const FavoritesScreen({super.key, this.onWordTap});
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
 
-                // Favorites list
+                // Favorites list - full detail cards
                 if (provider.favorites.isNotEmpty)
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
@@ -110,47 +111,10 @@ class FavoritesScreen extends StatelessWidget {
                         (context, index) {
                           final entry = provider.favorites[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: WordListTile(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: WordDetailCard(
                               entry: entry,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder: (_, __, ___) =>
-                                        WordDetailScreen(entry: entry),
-                                    transitionsBuilder: (_, animation, __, child) {
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: child,
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              onRemove: () {
-                                provider.toggleFavorite(entry);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '"${entry.word}" removed from saved words',
-                                      style: const TextStyle(color: AppTheme.textPrimary),
-                                    ),
-                                    backgroundColor: AppTheme.surface,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    action: SnackBarAction(
-                                      label: 'Undo',
-                                      textColor: AppTheme.accent,
-                                      onPressed: () {
-                                        provider.toggleFavorite(entry);
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
+                              onWordTap: onWordTap,
                             ),
                           );
                         },
@@ -166,4 +130,3 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 }
-

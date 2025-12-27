@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
-import '../screens/word_detail_screen.dart';
-import 'word_list_tile.dart';
+import 'word_detail_card.dart';
 
 class SearchResults extends StatelessWidget {
   final DictionaryProvider provider;
   final VoidCallback onClear;
+  final Function(String)? onWordTap;
 
   const SearchResults({
     super.key,
     required this.provider,
     required this.onClear,
+    this.onWordTap,
   });
 
   @override
@@ -51,9 +52,26 @@ class SearchResults extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Results',
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppTheme.accent,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Definition found',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
               ),
               TextButton.icon(
                 onPressed: onClear,
@@ -66,34 +84,17 @@ class SearchResults extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
-          // Results list
-          ...provider.currentEntries.map((entry) {
+          // Full word details for each entry
+          ...provider.currentEntries.asMap().entries.map((entry) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: WordListTile(
-                entry: entry,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (_, __, ___) => WordDetailScreen(entry: entry),
-                      transitionsBuilder: (_, animation, __, child) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.05, 0),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
+              padding: EdgeInsets.only(
+                bottom: entry.key < provider.currentEntries.length - 1 ? 20 : 0,
+              ),
+              child: WordDetailCard(
+                entry: entry.value,
+                onWordTap: onWordTap,
               ),
             );
           }),
@@ -161,4 +162,3 @@ class SearchResults extends StatelessWidget {
     );
   }
 }
-

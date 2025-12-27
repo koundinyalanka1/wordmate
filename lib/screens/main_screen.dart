@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'favorites_screen.dart';
@@ -13,17 +15,21 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const FavoritesScreen(),
-  ];
+  void _searchWord(String word) {
+    // Switch to home tab and search
+    setState(() => _currentIndex = 0);
+    context.read<DictionaryProvider>().searchWord(word);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: [
+          const HomeScreen(),
+          FavoritesScreen(onWordTap: _searchWord),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -113,4 +119,3 @@ class _NavBarItem extends StatelessWidget {
     );
   }
 }
-

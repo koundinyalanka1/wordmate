@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _onSearch(String query) {
     if (query.trim().isNotEmpty) {
+      _searchController.text = query;
       context.read<DictionaryProvider>().searchWord(query);
     }
   }
@@ -133,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: SearchResults(
                         provider: provider,
                         onClear: _onClearSearch,
+                        onWordTap: _onSearch,
                       ),
                     );
                   }
@@ -146,7 +148,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         if (provider.wordOfTheDay != null)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                            child: WordOfDayCard(entry: provider.wordOfTheDay!),
+                            child: WordOfDayCard(
+                              entry: provider.wordOfTheDay!,
+                              onWordTap: _onSearch,
+                            ),
                           ),
 
                         // Recent searches
@@ -191,6 +196,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               ),
                             ),
                           ),
+
+                        // Bottom padding
+                        const SizedBox(height: 100),
                       ],
                     ),
                   );
@@ -203,4 +211,3 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 }
-
