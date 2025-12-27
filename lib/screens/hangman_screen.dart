@@ -1,6 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/dictionary_provider.dart';
+import '../services/dictionary_service.dart';
 import '../services/word_list_service.dart';
 import '../theme/app_theme.dart';
 
@@ -13,13 +16,22 @@ class HangmanScreen extends StatefulWidget {
 
 class _HangmanScreenState extends State<HangmanScreen> {
   final WordListService _wordListService = WordListService();
+  final DictionaryService _dictionaryService = DictionaryService();
   String _targetWord = '';
   Set<String> _guessedLetters = {};
+  Set<String> _revealedLetters = {}; // Letters revealed at start (25%)
+  List<String> _keyboardLetters = []; // Jumbled keyboard
   int _wrongGuesses = 0;
   bool _gameOver = false;
   bool _hasWon = false;
   bool _isLoading = true;
+  int _score = 0;
+  int _gamesPlayed = 0;
+  String? _clue; // Definition clue
+  bool _showClue = false;
   static const int _maxWrongGuesses = 6;
+  static const String _scoreKey = 'hangman_score';
+  static const String _gamesKey = 'hangman_games';
 
   @override
   void initState() {
@@ -29,43 +41,117 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
   Future<void> _initGame() async {
     setState(() => _isLoading = true);
+    await _loadScore();
     await _wordListService.loadWords();
-    _startNewGame();
+    await _startNewGame();
   }
 
-  void _startNewGame() {
-    // Get a random word that's good for hangman (5-10 letters, no spaces/hyphens)
+  Future<void> _loadScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _score = prefs.getInt(_scoreKey) ?? 0;
+      _gamesPlayed = prefs.getInt(_gamesKey) ?? 0;
+    });
+  }
+
+  Future<void> _saveScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_scoreKey, _score);
+    await prefs.setInt(_gamesKey, _gamesPlayed);
+  }
+
+  Future<void> _startNewGame() async {
+    setState(() {
+      _isLoading = true;
+      _clue = null;
+      _showClue = false;
+    });
+
+    // Get a random word that's good for hangman (4-8 letters, no spaces/hyphens/symbols)
     String word = '';
+    String? clue;
     
-    for (int i = 0; i < 50; i++) {
-      final candidate = _wordListService.getRandomWord();
-      if (candidate.length >= 4 && 
-          candidate.length <= 10 && 
-          !candidate.contains(' ') && 
-          !candidate.contains('-') &&
-          candidate.toLowerCase() == candidate &&
-          RegExp(r'^[a-z]+$').hasMatch(candidate)) {
-        word = candidate;
-        break;
+    // Try to find a word with a valid definition
+    for (int attempt = 0; attempt < 10; attempt++) {
+      for (int i = 0; i < 20; i++) {
+        final candidate = _wordListService.getRandomWord();
+        if (candidate.length >= 4 && 
+            candidate.length <= 8 && 
+            RegExp(r'^[a-zA-Z]+$').hasMatch(candidate)) {
+          word = candidate.toLowerCase();
+          break;
+        }
+      }
+      
+      if (word.isEmpty) {
+        word = 'flutter';
+      }
+
+      // Try to fetch definition
+      try {
+        final entries = await _dictionaryService.getDefinition(word);
+        if (entries.isNotEmpty && entries.first.meanings.isNotEmpty) {
+          final firstMeaning = entries.first.meanings.first;
+          if (firstMeaning.definitions.isNotEmpty) {
+            clue = firstMeaning.definitions.first.definition;
+            break; // Found a word with a definition
+          }
+        }
+      } catch (e) {
+        // Word not found in dictionary, try another
+        word = '';
+        continue;
       }
     }
-    
+
+    // Fallback if no definition found
     if (word.isEmpty) {
-      word = 'flutter'; // Fallback word
+      word = 'flutter';
+      clue = 'A popular cross-platform framework for building mobile apps';
     }
 
+    final targetWord = word.toUpperCase();
+    
+    // Get unique letters in the word
+    final uniqueLetters = targetWord.split('').toSet().toList();
+    
+    // Reveal 25% of unique letters
+    final numToReveal = (uniqueLetters.length * 0.25).ceil();
+    final random = Random();
+    uniqueLetters.shuffle(random);
+    final revealed = uniqueLetters.take(numToReveal).toSet();
+    
+    // Generate keyboard: word letters + some random extra letters
+    final keyboardSet = <String>{};
+    keyboardSet.addAll(targetWord.split(''));
+    
+    // Add random extra letters to make it more challenging (total ~12-16 letters)
+    const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    final targetKeyboardSize = min(16, max(12, targetWord.length + 6));
+    while (keyboardSet.length < targetKeyboardSize) {
+      final randomLetter = allLetters[random.nextInt(26)];
+      keyboardSet.add(randomLetter);
+    }
+    
+    // Shuffle keyboard letters
+    final keyboard = keyboardSet.toList()..shuffle(random);
+
     setState(() {
-      _targetWord = word.toUpperCase();
+      _targetWord = targetWord;
       _guessedLetters = {};
+      _revealedLetters = revealed;
+      _keyboardLetters = keyboard;
       _wrongGuesses = 0;
       _gameOver = false;
       _hasWon = false;
       _isLoading = false;
+      _clue = clue;
+      _showClue = false;
     });
   }
 
   void _guessLetter(String letter) {
-    if (_gameOver || _guessedLetters.contains(letter)) return;
+    if (_gameOver || _guessedLetters.contains(letter) || _revealedLetters.contains(letter)) return;
 
     setState(() {
       _guessedLetters.add(letter);
@@ -75,23 +161,33 @@ class _HangmanScreenState extends State<HangmanScreen> {
         if (_wrongGuesses >= _maxWrongGuesses) {
           _gameOver = true;
           _hasWon = false;
+          _gamesPlayed++;
+          _saveScore();
         }
       } else {
         // Check if won
         final allLettersGuessed = _targetWord
             .split('')
-            .every((l) => _guessedLetters.contains(l));
+            .every((l) => _guessedLetters.contains(l) || _revealedLetters.contains(l));
         if (allLettersGuessed) {
           _gameOver = true;
           _hasWon = true;
+          _score++;
+          _gamesPlayed++;
+          _saveScore();
         }
       }
     });
   }
 
+  void _toggleClue() {
+    setState(() {
+      _showClue = !_showClue;
+    });
+  }
+
   void _lookupWord() {
     context.read<DictionaryProvider>().searchWord(_targetWord.toLowerCase());
-    // Navigate to search tab would require a callback, so we just search
   }
 
   @override
@@ -102,11 +198,23 @@ class _HangmanScreenState extends State<HangmanScreen> {
       body: SafeArea(
         child: _isLoading
             ? Center(
-                child: CircularProgressIndicator(color: colors.accent),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: colors.accent),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Finding a word...',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               )
             : CustomScrollView(
                 slivers: [
-                  // Header
+                  // Header with score
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -128,18 +236,60 @@ class _HangmanScreenState extends State<HangmanScreen> {
                                 ),
                               ),
                               const SizedBox(width: 14),
-                              Text(
-                                'Hangman',
-                                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                  color: colors.textPrimary,
+                              Expanded(
+                                child: Text(
+                                  'Hangman',
+                                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              // Score badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: colors.accent.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: colors.accent.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events_rounded,
+                                      color: colors.accent,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '$_score',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: colors.accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Guess the word letter by letter',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Guess the word letter by letter',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              Text(
+                                '$_gamesPlayed games played',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: colors.textMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -154,22 +304,36 @@ class _HangmanScreenState extends State<HangmanScreen> {
                         children: [
                           // Hangman drawing
                           _buildHangmanDrawing(colors),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 20),
+
+                          // Clue section
+                          if (_clue != null) _buildClueSection(colors),
+                          const SizedBox(height: 20),
 
                           // Word display
                           _buildWordDisplay(colors),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
                           // Wrong guesses counter
-                          Text(
-                            'Wrong guesses: $_wrongGuesses / $_maxWrongGuesses',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
                               color: _wrongGuesses > 3 
-                                  ? colors.error 
-                                  : colors.textSecondary,
+                                  ? colors.error.withValues(alpha: 0.1)
+                                  : colors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Lives: ${_maxWrongGuesses - _wrongGuesses} / $_maxWrongGuesses',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: _wrongGuesses > 3 
+                                    ? colors.error 
+                                    : colors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
 
                           // Game over message or keyboard
                           if (_gameOver)
@@ -188,9 +352,73 @@ class _HangmanScreenState extends State<HangmanScreen> {
     );
   }
 
+  Widget _buildClueSection(AppColors colors) {
+    return GestureDetector(
+      onTap: _toggleClue,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _showClue ? colors.accent.withValues(alpha: 0.5) : colors.surfaceLight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  _showClue ? Icons.lightbulb : Icons.lightbulb_outline,
+                  color: _showClue ? colors.accent : colors.textMuted,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'CLUE',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: _showClue ? colors.accent : colors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  _showClue ? Icons.visibility_off : Icons.visibility,
+                  color: colors.textMuted,
+                  size: 18,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _showClue ? 'Hide' : 'Tap to reveal',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            if (_showClue) ...[
+              const SizedBox(height: 12),
+              Text(
+                _clue!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHangmanDrawing(AppColors colors) {
     return Container(
-      height: 200,
+      height: 160,
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.surface,
@@ -210,32 +438,52 @@ class _HangmanScreenState extends State<HangmanScreen> {
   Widget _buildWordDisplay(AppColors colors) {
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 6,
+      runSpacing: 6,
       children: _targetWord.split('').map((letter) {
+        final isRevealed = _revealedLetters.contains(letter);
         final isGuessed = _guessedLetters.contains(letter);
-        final showLetter = isGuessed || _gameOver;
+        final showLetter = isRevealed || isGuessed || _gameOver;
+
+        Color bgColor;
+        Color borderColor;
+        Color textColor;
+
+        if (isRevealed) {
+          // Pre-revealed letters - shown in a muted style
+          bgColor = colors.surfaceLight;
+          borderColor = colors.textMuted;
+          textColor = colors.textMuted;
+        } else if (isGuessed) {
+          // User guessed correctly
+          bgColor = colors.accent.withValues(alpha: 0.2);
+          borderColor = colors.accent;
+          textColor = colors.accent;
+        } else if (_gameOver && !isGuessed) {
+          // Game over, show unguessed letters in red
+          bgColor = colors.error.withValues(alpha: 0.2);
+          borderColor = colors.error;
+          textColor = colors.error;
+        } else {
+          // Not yet revealed
+          bgColor = colors.surface;
+          borderColor = colors.surfaceLight;
+          textColor = colors.textPrimary;
+        }
 
         return Container(
-          width: 40,
-          height: 50,
+          width: 36,
+          height: 46,
           decoration: BoxDecoration(
-            color: showLetter 
-                ? (isGuessed ? colors.accent.withValues(alpha: 0.2) : colors.error.withValues(alpha: 0.2))
-                : colors.surface,
+            color: bgColor,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: showLetter 
-                  ? (isGuessed ? colors.accent : colors.error)
-                  : colors.surfaceLight,
-              width: 2,
-            ),
+            border: Border.all(color: borderColor, width: 2),
           ),
           child: Center(
             child: Text(
               showLetter ? letter : '',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: isGuessed ? colors.accent : colors.error,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: textColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -277,45 +525,56 @@ class _HangmanScreenState extends State<HangmanScreen> {
               const SizedBox(height: 8),
               Text(
                 _hasWon 
-                    ? 'You guessed the word!'
+                    ? 'You guessed "$_targetWord"!'
                     : 'The word was: $_targetWord',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
+              if (_hasWon) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Score: $_score',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colors.accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          runSpacing: 12,
           children: [
             // Look up word button
             OutlinedButton.icon(
               onPressed: _lookupWord,
-              icon: const Icon(Icons.search_rounded),
-              label: const Text('Look up word'),
+              icon: const Icon(Icons.search_rounded, size: 18),
+              label: const Text('Look up'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.accent,
                 side: BorderSide(color: colors.accent),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
             // New game button
             ElevatedButton.icon(
               onPressed: _startNewGame,
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('New Game'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.accent,
                 foregroundColor: colors.background,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -326,72 +585,66 @@ class _HangmanScreenState extends State<HangmanScreen> {
   }
 
   Widget _buildKeyboard(AppColors colors) {
-    const rows = [
-      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-      ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-    ];
+    // Dynamic grid keyboard from jumbled letters
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: _keyboardLetters.map((letter) {
+        final isGuessed = _guessedLetters.contains(letter);
+        final isRevealed = _revealedLetters.contains(letter);
+        final isCorrect = _targetWord.contains(letter);
+        final isDisabled = isGuessed || isRevealed;
+        
+        Color bgColor;
+        Color textColor;
+        Color borderColor;
+        
+        if (isRevealed) {
+          // Already revealed at start - dim
+          bgColor = colors.surfaceLight.withValues(alpha: 0.5);
+          textColor = colors.textMuted;
+          borderColor = colors.surfaceLight;
+        } else if (isGuessed) {
+          if (isCorrect) {
+            bgColor = colors.success.withValues(alpha: 0.2);
+            textColor = colors.success;
+            borderColor = colors.success;
+          } else {
+            bgColor = colors.error.withValues(alpha: 0.2);
+            textColor = colors.error;
+            borderColor = colors.error;
+          }
+        } else {
+          bgColor = colors.surface;
+          textColor = colors.textPrimary;
+          borderColor = colors.surfaceLight;
+        }
 
-    return Column(
-      children: rows.map((row) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: row.map((letter) {
-              final isGuessed = _guessedLetters.contains(letter);
-              final isCorrect = _targetWord.contains(letter);
-              
-              Color bgColor;
-              Color textColor;
-              
-              if (isGuessed) {
-                if (isCorrect) {
-                  bgColor = colors.success.withValues(alpha: 0.2);
-                  textColor = colors.success;
-                } else {
-                  bgColor = colors.error.withValues(alpha: 0.2);
-                  textColor = colors.error;
-                }
-              } else {
-                bgColor = colors.surface;
-                textColor = colors.textPrimary;
-              }
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Material(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    onTap: isGuessed ? null : () => _guessLetter(letter),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 32,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isGuessed 
-                              ? (isCorrect ? colors.success : colors.error)
-                              : colors.surfaceLight,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          letter,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                          ),
-                        ),
-                      ),
-                    ),
+        return Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: isDisabled ? null : () => _guessLetter(letter),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 44,
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  letter,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ),
           ),
         );
       }).toList(),
@@ -413,41 +666,41 @@ class HangmanPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color
+      ..color = color.withValues(alpha: 0.5)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final centerX = size.width / 2;
-    final baseY = size.height - 30;
-    final topY = 30.0;
+    final baseY = size.height - 15;
+    final topY = 15.0;
 
     // Always draw the gallows
     // Base
     canvas.drawLine(
-      Offset(centerX - 60, baseY),
-      Offset(centerX + 60, baseY),
+      Offset(centerX - 45, baseY),
+      Offset(centerX + 45, baseY),
       paint,
     );
     
     // Pole
     canvas.drawLine(
-      Offset(centerX - 30, baseY),
-      Offset(centerX - 30, topY),
+      Offset(centerX - 20, baseY),
+      Offset(centerX - 20, topY),
       paint,
     );
     
     // Top bar
     canvas.drawLine(
-      Offset(centerX - 30, topY),
-      Offset(centerX + 20, topY),
+      Offset(centerX - 20, topY),
+      Offset(centerX + 15, topY),
       paint,
     );
     
     // Rope
     canvas.drawLine(
-      Offset(centerX + 20, topY),
-      Offset(centerX + 20, topY + 20),
+      Offset(centerX + 15, topY),
+      Offset(centerX + 15, topY + 12),
       paint,
     );
 
@@ -458,8 +711,8 @@ class HangmanPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final headCenter = Offset(centerX + 20, topY + 35);
-    const headRadius = 15.0;
+    final headCenter = Offset(centerX + 15, topY + 23);
+    const headRadius = 11.0;
 
     // Head
     if (wrongGuesses >= 1) {
@@ -469,8 +722,8 @@ class HangmanPainter extends CustomPainter {
     // Body
     if (wrongGuesses >= 2) {
       canvas.drawLine(
-        Offset(centerX + 20, topY + 50),
-        Offset(centerX + 20, topY + 90),
+        Offset(centerX + 15, topY + 34),
+        Offset(centerX + 15, topY + 62),
         bodyPaint,
       );
     }
@@ -478,8 +731,8 @@ class HangmanPainter extends CustomPainter {
     // Left arm
     if (wrongGuesses >= 3) {
       canvas.drawLine(
-        Offset(centerX + 20, topY + 60),
-        Offset(centerX, topY + 75),
+        Offset(centerX + 15, topY + 42),
+        Offset(centerX, topY + 52),
         bodyPaint,
       );
     }
@@ -487,8 +740,8 @@ class HangmanPainter extends CustomPainter {
     // Right arm
     if (wrongGuesses >= 4) {
       canvas.drawLine(
-        Offset(centerX + 20, topY + 60),
-        Offset(centerX + 40, topY + 75),
+        Offset(centerX + 15, topY + 42),
+        Offset(centerX + 30, topY + 52),
         bodyPaint,
       );
     }
@@ -496,8 +749,8 @@ class HangmanPainter extends CustomPainter {
     // Left leg
     if (wrongGuesses >= 5) {
       canvas.drawLine(
-        Offset(centerX + 20, topY + 90),
-        Offset(centerX, topY + 115),
+        Offset(centerX + 15, topY + 62),
+        Offset(centerX, topY + 78),
         bodyPaint,
       );
     }
@@ -505,8 +758,8 @@ class HangmanPainter extends CustomPainter {
     // Right leg
     if (wrongGuesses >= 6) {
       canvas.drawLine(
-        Offset(centerX + 20, topY + 90),
-        Offset(centerX + 40, topY + 115),
+        Offset(centerX + 15, topY + 62),
+        Offset(centerX + 30, topY + 78),
         bodyPaint,
       );
     }
@@ -517,4 +770,3 @@ class HangmanPainter extends CustomPainter {
     return oldDelegate.wrongGuesses != wrongGuesses;
   }
 }
-
