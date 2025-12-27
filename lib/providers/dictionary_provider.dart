@@ -3,12 +3,14 @@ import 'package:audioplayers/audioplayers.dart';
 import '../models/word_entry.dart';
 import '../services/dictionary_service.dart';
 import '../services/storage_service.dart';
+import '../services/word_list_service.dart';
 
 enum SearchState { idle, loading, success, error, notFound }
 
 class DictionaryProvider extends ChangeNotifier {
   final DictionaryService _dictionaryService = DictionaryService();
   final StorageService _storageService = StorageService();
+  final WordListService _wordListService = WordListService();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   SearchState _searchState = SearchState.idle;
@@ -18,6 +20,7 @@ class DictionaryProvider extends ChangeNotifier {
   List<String> _history = [];
   WordEntry? _wordOfTheDay;
   bool _isInitialized = false;
+  List<String> _suggestions = [];
 
   SearchState get searchState => _searchState;
   List<WordEntry> get currentEntries => _currentEntries;
@@ -26,9 +29,11 @@ class DictionaryProvider extends ChangeNotifier {
   List<String> get history => _history;
   WordEntry? get wordOfTheDay => _wordOfTheDay;
   bool get isInitialized => _isInitialized;
+  List<String> get suggestions => _suggestions;
 
   Future<void> init() async {
     await _storageService.init();
+    await _wordListService.loadWords();
     await _loadFavorites();
     await _loadHistory();
     await _loadWordOfTheDay();
@@ -45,16 +50,42 @@ class DictionaryProvider extends ChangeNotifier {
   }
 
   Future<void> _loadWordOfTheDay() async {
-    final word = _dictionaryService.getWordOfTheDay();
+    // Get word of the day from the word list
+    final word = _wordListService.getWordOfTheDay();
     try {
       final entries = await _dictionaryService.getDefinition(word);
       if (entries.isNotEmpty) {
         _wordOfTheDay = entries.first;
       }
     } catch (e) {
-      // Silently fail for word of the day
-      debugPrint('Failed to load word of the day: $e');
+      // If the random word fails, try a fallback
+      debugPrint('Failed to load word of the day ($word): $e');
+      try {
+        // Try another random word
+        final fallbackWord = _wordListService.getRandomWord();
+        final entries = await _dictionaryService.getDefinition(fallbackWord);
+        if (entries.isNotEmpty) {
+          _wordOfTheDay = entries.first;
+        }
+      } catch (e2) {
+        debugPrint('Fallback word of the day also failed: $e2');
+      }
     }
+  }
+
+  /// Get autocomplete suggestions for a query
+  void updateSuggestions(String query) {
+    if (query.trim().length < 2) {
+      _suggestions = [];
+    } else {
+      _suggestions = _wordListService.getSuggestions(query, limit: 8);
+    }
+    notifyListeners();
+  }
+
+  void clearSuggestions() {
+    _suggestions = [];
+    notifyListeners();
   }
 
   Future<void> searchWord(String word) async {
@@ -63,6 +94,7 @@ class DictionaryProvider extends ChangeNotifier {
     _searchState = SearchState.loading;
     _currentEntries = [];
     _errorMessage = '';
+    _suggestions = []; // Clear suggestions when searching
     notifyListeners();
 
     try {
@@ -87,6 +119,7 @@ class DictionaryProvider extends ChangeNotifier {
     _searchState = SearchState.idle;
     _currentEntries = [];
     _errorMessage = '';
+    _suggestions = [];
     notifyListeners();
   }
 
@@ -136,4 +169,3 @@ class DictionaryProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-
