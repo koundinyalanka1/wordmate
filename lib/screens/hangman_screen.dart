@@ -1,14 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/dictionary_provider.dart';
 import '../services/dictionary_service.dart';
 import '../services/word_list_service.dart';
 import '../theme/app_theme.dart';
 
 class HangmanScreen extends StatefulWidget {
-  const HangmanScreen({super.key});
+  final Function(String)? onLookupWord;
+
+  const HangmanScreen({super.key, this.onLookupWord});
 
   @override
   State<HangmanScreen> createState() => _HangmanScreenState();
@@ -187,7 +187,9 @@ class _HangmanScreenState extends State<HangmanScreen> {
   }
 
   void _lookupWord() {
-    context.read<DictionaryProvider>().searchWord(_targetWord.toLowerCase());
+    if (widget.onLookupWord != null) {
+      widget.onLookupWord!(_targetWord.toLowerCase());
+    }
   }
 
   @override
@@ -450,22 +452,18 @@ class _HangmanScreenState extends State<HangmanScreen> {
         Color textColor;
 
         if (isRevealed) {
-          // Pre-revealed letters - shown in a muted style
           bgColor = colors.surfaceLight;
           borderColor = colors.textMuted;
           textColor = colors.textMuted;
         } else if (isGuessed) {
-          // User guessed correctly
           bgColor = colors.accent.withValues(alpha: 0.2);
           borderColor = colors.accent;
           textColor = colors.accent;
         } else if (_gameOver && !isGuessed) {
-          // Game over, show unguessed letters in red
           bgColor = colors.error.withValues(alpha: 0.2);
           borderColor = colors.error;
           textColor = colors.error;
         } else {
-          // Not yet revealed
           bgColor = colors.surface;
           borderColor = colors.surfaceLight;
           textColor = colors.textPrimary;
@@ -585,11 +583,11 @@ class _HangmanScreenState extends State<HangmanScreen> {
   }
 
   Widget _buildKeyboard(AppColors colors) {
-    // Dynamic grid keyboard from jumbled letters
+    // Dynamic grid keyboard from jumbled letters - round bubbly buttons
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 10,
       children: _keyboardLetters.map((letter) {
         final isGuessed = _guessedLetters.contains(letter);
         final isRevealed = _revealedLetters.contains(letter);
@@ -599,49 +597,63 @@ class _HangmanScreenState extends State<HangmanScreen> {
         Color bgColor;
         Color textColor;
         Color borderColor;
+        List<BoxShadow>? shadows;
         
         if (isRevealed) {
-          // Already revealed at start - dim
           bgColor = colors.surfaceLight.withValues(alpha: 0.5);
           textColor = colors.textMuted;
           borderColor = colors.surfaceLight;
+          shadows = null;
         } else if (isGuessed) {
           if (isCorrect) {
-            bgColor = colors.success.withValues(alpha: 0.2);
-            textColor = colors.success;
+            bgColor = colors.success;
+            textColor = Colors.white;
             borderColor = colors.success;
+            shadows = [
+              BoxShadow(
+                color: colors.success.withValues(alpha: 0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ];
           } else {
-            bgColor = colors.error.withValues(alpha: 0.2);
+            bgColor = colors.error.withValues(alpha: 0.3);
             textColor = colors.error;
-            borderColor = colors.error;
+            borderColor = colors.error.withValues(alpha: 0.5);
+            shadows = null;
           }
         } else {
           bgColor = colors.surface;
           textColor = colors.textPrimary;
           borderColor = colors.surfaceLight;
+          shadows = [
+            BoxShadow(
+              color: colors.accent.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ];
         }
 
-        return Material(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            onTap: isDisabled ? null : () => _guessLetter(letter),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: 44,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: borderColor, width: 1.5),
-              ),
-              child: Center(
-                child: Text(
-                  letter,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+        return GestureDetector(
+          onTap: isDisabled ? null : () => _guessLetter(letter),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 2),
+              boxShadow: shadows,
+            ),
+            child: Center(
+              child: Text(
+                letter,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
             ),
@@ -676,35 +688,30 @@ class HangmanPainter extends CustomPainter {
     final topY = 15.0;
 
     // Always draw the gallows
-    // Base
     canvas.drawLine(
       Offset(centerX - 45, baseY),
       Offset(centerX + 45, baseY),
       paint,
     );
     
-    // Pole
     canvas.drawLine(
       Offset(centerX - 20, baseY),
       Offset(centerX - 20, topY),
       paint,
     );
     
-    // Top bar
     canvas.drawLine(
       Offset(centerX - 20, topY),
       Offset(centerX + 15, topY),
       paint,
     );
     
-    // Rope
     canvas.drawLine(
       Offset(centerX + 15, topY),
       Offset(centerX + 15, topY + 12),
       paint,
     );
 
-    // Draw body parts based on wrong guesses
     final bodyPaint = Paint()
       ..color = accentColor
       ..strokeWidth = 3
@@ -714,12 +721,10 @@ class HangmanPainter extends CustomPainter {
     final headCenter = Offset(centerX + 15, topY + 23);
     const headRadius = 11.0;
 
-    // Head
     if (wrongGuesses >= 1) {
       canvas.drawCircle(headCenter, headRadius, bodyPaint);
     }
 
-    // Body
     if (wrongGuesses >= 2) {
       canvas.drawLine(
         Offset(centerX + 15, topY + 34),
@@ -728,7 +733,6 @@ class HangmanPainter extends CustomPainter {
       );
     }
 
-    // Left arm
     if (wrongGuesses >= 3) {
       canvas.drawLine(
         Offset(centerX + 15, topY + 42),
@@ -737,7 +741,6 @@ class HangmanPainter extends CustomPainter {
       );
     }
 
-    // Right arm
     if (wrongGuesses >= 4) {
       canvas.drawLine(
         Offset(centerX + 15, topY + 42),
@@ -746,7 +749,6 @@ class HangmanPainter extends CustomPainter {
       );
     }
 
-    // Left leg
     if (wrongGuesses >= 5) {
       canvas.drawLine(
         Offset(centerX + 15, topY + 62),
@@ -755,7 +757,6 @@ class HangmanPainter extends CustomPainter {
       );
     }
 
-    // Right leg
     if (wrongGuesses >= 6) {
       canvas.drawLine(
         Offset(centerX + 15, topY + 62),

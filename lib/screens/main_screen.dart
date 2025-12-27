@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           const HomeScreen(),
           WordOfDayScreen(onWordTap: _searchWord),
-          const HangmanScreen(),
+          HangmanScreen(onLookupWord: _searchWord),
           const SettingsScreen(),
         ],
       ),
