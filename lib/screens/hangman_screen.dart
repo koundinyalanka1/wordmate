@@ -31,6 +31,7 @@ class _HangmanScreenState extends State<HangmanScreen> {
   int _gamesPlayed = 0;
   String? _clue; // Definition clue
   bool _showClue = false;
+  HangmanDifficulty? _currentDifficulty; // Track current difficulty
   static const int _maxWrongGuesses = 6;
   static const String _scoreKey = 'hangman_score';
   static const String _gamesKey = 'hangman_games';
@@ -40,6 +41,7 @@ class _HangmanScreenState extends State<HangmanScreen> {
     super.initState();
     _initGame();
   }
+
 
   Future<void> _initGame() async {
     setState(() => _isLoading = true);
@@ -210,6 +212,21 @@ class _HangmanScreenState extends State<HangmanScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    
+    // Watch for difficulty changes
+    final gameSettings = context.watch<GameSettingsProvider>();
+    final newDifficulty = gameSettings.difficulty;
+    
+    // If difficulty changed and we're not already loading, start a new game
+    if (_currentDifficulty != null && _currentDifficulty != newDifficulty && !_isLoading) {
+      _currentDifficulty = newDifficulty;
+      // Schedule new game after build completes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startNewGame();
+      });
+    } else if (_currentDifficulty == null) {
+      _currentDifficulty = newDifficulty;
+    }
 
     return Scaffold(
       body: SafeArea(
