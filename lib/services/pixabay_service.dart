@@ -59,8 +59,8 @@ class PixabayService {
       'key': config.pixabayApiKey,
       'q': query.trim(),
       'per_page': perPage.toString(),
-      'image_type': 'photo',
-      'safesearch': 'true',
+      'image_type': 'all',
+      'safesearch': 'false',
     });
 
     try {

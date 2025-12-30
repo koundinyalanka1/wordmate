@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "595153866160",
+    "project_id": "wordmate-329a9",
+    "storage_bucket": "wordmate-329a9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595153866160:android:a5281ba9a3828e5f4e5a75",
+        "android_client_info": {
+          "package_name": "com.english.dictionary.englishdictionary"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTVsprzFIa3MwShGhyMZ-klkjhVOcLyeM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-2596031675923197~5599805993"
+    }
+  ],
+  "configuration_version": "1"
+}
