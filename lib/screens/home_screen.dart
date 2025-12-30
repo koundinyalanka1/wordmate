@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/history_section.dart';
 import '../widgets/search_results.dart';
+import '../widgets/image_slider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -111,6 +112,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     onClear: _onClearSearch,
                   ),
                 ),
+              ),
+
+              // Image slider (shows when we have images or are loading them)
+              Consumer<DictionaryProvider>(
+                builder: (context, provider, _) {
+                  final showImageSlider = provider.searchState == SearchState.success ||
+                      provider.searchState == SearchState.loading ||
+                      provider.isLoadingImages ||
+                      provider.images.isNotEmpty;
+
+                  if (!showImageSlider) {
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  }
+
+                  return SliverToBoxAdapter(
+                    child: ImageSlider(
+                      images: provider.images,
+                      isLoading: provider.isLoadingImages,
+                      searchWord: provider.currentImageSearchWord,
+                    ),
+                  );
+                },
               ),
 
               // Dynamic content based on search state

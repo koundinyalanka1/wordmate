@@ -4,6 +4,7 @@ import '../models/word_entry.dart';
 import '../services/dictionary_service.dart';
 import '../services/storage_service.dart';
 import '../services/word_list_service.dart';
+import '../services/pixabay_service.dart';
 
 enum SearchState { idle, loading, success, error, notFound }
 
@@ -11,6 +12,7 @@ class DictionaryProvider extends ChangeNotifier {
   final DictionaryService _dictionaryService = DictionaryService();
   final StorageService _storageService = StorageService();
   final WordListService _wordListService = WordListService();
+  final PixabayService _pixabayService = PixabayService();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   SearchState _searchState = SearchState.idle;
@@ -21,6 +23,11 @@ class DictionaryProvider extends ChangeNotifier {
   WordEntry? _wordOfTheDay;
   bool _isInitialized = false;
   List<String> _suggestions = [];
+  
+  // Image-related state
+  List<PixabayImage> _images = [];
+  bool _isLoadingImages = false;
+  String? _currentImageSearchWord;
 
   SearchState get searchState => _searchState;
   List<WordEntry> get currentEntries => _currentEntries;
@@ -30,6 +37,11 @@ class DictionaryProvider extends ChangeNotifier {
   WordEntry? get wordOfTheDay => _wordOfTheDay;
   bool get isInitialized => _isInitialized;
   List<String> get suggestions => _suggestions;
+  
+  // Image getters
+  List<PixabayImage> get images => _images;
+  bool get isLoadingImages => _isLoadingImages;
+  String? get currentImageSearchWord => _currentImageSearchWord;
 
   Future<void> init() async {
     await _storageService.init();
@@ -95,7 +107,12 @@ class DictionaryProvider extends ChangeNotifier {
     _currentEntries = [];
     _errorMessage = '';
     _suggestions = []; // Clear suggestions when searching
+    _images = []; // Clear previous images
+    _currentImageSearchWord = word.trim();
     notifyListeners();
+
+    // Fetch images in parallel with definition
+    _fetchImages(word.trim());
 
     try {
       _currentEntries = await _dictionaryService.getDefinition(word.trim());
@@ -115,11 +132,30 @@ class DictionaryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetch images from Pixabay for the searched word
+  Future<void> _fetchImages(String word) async {
+    _isLoadingImages = true;
+    notifyListeners();
+
+    try {
+      _images = await _pixabayService.searchImages(word, perPage: 10);
+    } catch (e) {
+      debugPrint('Failed to fetch images: $e');
+      _images = [];
+    }
+
+    _isLoadingImages = false;
+    notifyListeners();
+  }
+
   void clearSearch() {
     _searchState = SearchState.idle;
     _currentEntries = [];
     _errorMessage = '';
     _suggestions = [];
+    _images = [];
+    _isLoadingImages = false;
+    _currentImageSearchWord = null;
     notifyListeners();
   }
 
