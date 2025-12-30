@@ -88,8 +88,15 @@ class _HangmanScreenState extends State<HangmanScreen> {
     String word = '';
     String? clue;
     
+    // Only try a limited number of words to avoid long loading times
+    const maxAttempts = 8;
+    int attempts = 0;
+    
     // Iterate through shuffled words until we find one with a valid definition
     for (final candidate in shuffledWords) {
+      if (attempts >= maxAttempts) break;
+      attempts++;
+      
       // Try to fetch definition for this word
       try {
         final entries = await _dictionaryService.getDefinition(candidate.toLowerCase());
@@ -114,17 +121,10 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
     // Fallback if no word with definition found
     if (word.isEmpty) {
-      switch (difficulty) {
-        case HangmanDifficulty.easy:
-          word = 'happy';
-          clue = 'Feeling or showing pleasure or contentment';
-        case HangmanDifficulty.medium:
-          word = 'flutter';
-          clue = 'A popular cross-platform framework for building mobile apps';
-        case HangmanDifficulty.hard:
-          word = 'beautiful';
-          clue = 'Pleasing the senses or mind aesthetically';
-      }
+      final fallbacks = _getFallbackWords(difficulty);
+      final randomIndex = Random().nextInt(fallbacks.length);
+      word = fallbacks[randomIndex]['word']!;
+      clue = fallbacks[randomIndex]['clue']!;
     }
 
     final targetWord = word.toUpperCase();
@@ -165,6 +165,170 @@ class _HangmanScreenState extends State<HangmanScreen> {
       _clue = clue;
       _showClue = false;
     });
+  }
+
+  List<Map<String, String>> _getFallbackWords(HangmanDifficulty difficulty) {
+    switch (difficulty) {
+      case HangmanDifficulty.easy:
+        return [
+          {'word': 'happy', 'clue': 'Feeling or showing pleasure or contentment'},
+          {'word': 'house', 'clue': 'A building for human habitation'},
+          {'word': 'water', 'clue': 'A colorless liquid essential for life'},
+          {'word': 'light', 'clue': 'The natural agent that makes things visible'},
+          {'word': 'music', 'clue': 'Vocal or instrumental sounds combined in harmony'},
+          {'word': 'dream', 'clue': 'A series of images occurring during sleep'},
+          {'word': 'earth', 'clue': 'The planet on which we live'},
+          {'word': 'bread', 'clue': 'Food made from flour, water, and yeast'},
+          {'word': 'clock', 'clue': 'A device that shows the time'},
+          {'word': 'green', 'clue': 'The color of grass and leaves'},
+          {'word': 'heart', 'clue': 'The organ that pumps blood'},
+          {'word': 'phone', 'clue': 'A device used to make calls'},
+          {'word': 'smile', 'clue': 'A facial expression showing happiness'},
+          {'word': 'storm', 'clue': 'Violent weather with wind and rain'},
+          {'word': 'beach', 'clue': 'Sandy shore beside the sea'},
+          {'word': 'cloud', 'clue': 'White or gray mass floating in the sky'},
+          {'word': 'dance', 'clue': 'Moving rhythmically to music'},
+          {'word': 'flame', 'clue': 'The visible part of fire'},
+          {'word': 'grape', 'clue': 'A small fruit used to make wine'},
+          {'word': 'horse', 'clue': 'A large animal used for riding'},
+          {'word': 'juice', 'clue': 'Liquid extracted from fruits'},
+          {'word': 'knife', 'clue': 'A tool with a blade for cutting'},
+          {'word': 'lemon', 'clue': 'A sour yellow citrus fruit'},
+          {'word': 'money', 'clue': 'Currency used to buy things'},
+          {'word': 'night', 'clue': 'The time when the sun is down'},
+          {'word': 'ocean', 'clue': 'A vast body of salt water'},
+          {'word': 'paint', 'clue': 'Colored liquid used for art'},
+          {'word': 'queen', 'clue': 'A female ruler of a kingdom'},
+          {'word': 'river', 'clue': 'A large natural stream of water'},
+          {'word': 'sleep', 'clue': 'A state of rest for the body'},
+          {'word': 'table', 'clue': 'Furniture with a flat top'},
+          {'word': 'tiger', 'clue': 'A large striped wild cat'},
+          {'word': 'train', 'clue': 'A vehicle that runs on rails'},
+          {'word': 'voice', 'clue': 'Sound produced when speaking'},
+          {'word': 'whale', 'clue': 'The largest marine mammal'},
+          {'word': 'youth', 'clue': 'The period of being young'},
+          {'word': 'zebra', 'clue': 'A striped African animal'},
+          {'word': 'apple', 'clue': 'A round red or green fruit'},
+          {'word': 'brain', 'clue': 'The organ inside your head'},
+          {'word': 'chair', 'clue': 'Furniture for sitting'},
+          {'word': 'drink', 'clue': 'Liquid consumed for refreshment'},
+          {'word': 'eagle', 'clue': 'A large bird of prey'},
+          {'word': 'flour', 'clue': 'Powder used for baking'},
+          {'word': 'ghost', 'clue': 'A spirit of a dead person'},
+          {'word': 'honey', 'clue': 'Sweet substance made by bees'},
+          {'word': 'jelly', 'clue': 'A soft wobbly food'},
+          {'word': 'medal', 'clue': 'An award for achievement'},
+          {'word': 'piano', 'clue': 'A musical instrument with keys'},
+          {'word': 'radio', 'clue': 'A device for listening to broadcasts'},
+          {'word': 'snake', 'clue': 'A legless reptile'},
+        ];
+      case HangmanDifficulty.medium:
+        return [
+          {'word': 'garden', 'clue': 'A piece of ground for growing flowers'},
+          {'word': 'travel', 'clue': 'To go from one place to another'},
+          {'word': 'wonder', 'clue': 'A feeling of amazement'},
+          {'word': 'bridge', 'clue': 'A structure over an obstacle'},
+          {'word': 'forest', 'clue': 'A large area covered with trees'},
+          {'word': 'castle', 'clue': 'A large fortified building'},
+          {'word': 'memory', 'clue': 'The faculty for storing information'},
+          {'word': 'window', 'clue': 'An opening in a wall for light'},
+          {'word': 'planet', 'clue': 'A celestial body orbiting a star'},
+          {'word': 'silver', 'clue': 'A precious grayish-white metal'},
+          {'word': 'dragon', 'clue': 'A mythical fire-breathing creature'},
+          {'word': 'island', 'clue': 'Land surrounded by water'},
+          {'word': 'mirror', 'clue': 'A surface that reflects images'},
+          {'word': 'candle', 'clue': 'A cylinder of wax with a wick'},
+          {'word': 'jungle', 'clue': 'Dense tropical forest vegetation'},
+          {'word': 'legend', 'clue': 'A famous story from the past'},
+          {'word': 'copper', 'clue': 'A reddish-brown metal'},
+          {'word': 'temple', 'clue': 'A building for religious worship'},
+          {'word': 'wizard', 'clue': 'A person who practices magic'},
+          {'word': 'frozen', 'clue': 'Turned into ice'},
+          {'word': 'anchor', 'clue': 'A heavy object to moor a ship'},
+          {'word': 'ballet', 'clue': 'A classical dance form'},
+          {'word': 'canyon', 'clue': 'A deep gorge in the earth'},
+          {'word': 'desert', 'clue': 'A dry barren area of land'},
+          {'word': 'engine', 'clue': 'A machine that produces power'},
+          {'word': 'falcon', 'clue': 'A fast bird of prey'},
+          {'word': 'galaxy', 'clue': 'A system of millions of stars'},
+          {'word': 'helmet', 'clue': 'Protective headgear'},
+          {'word': 'insect', 'clue': 'A small six-legged creature'},
+          {'word': 'jacket', 'clue': 'A short coat'},
+          {'word': 'kitten', 'clue': 'A young cat'},
+          {'word': 'liquid', 'clue': 'A substance that flows freely'},
+          {'word': 'magnet', 'clue': 'An object that attracts iron'},
+          {'word': 'napkin', 'clue': 'A cloth for wiping hands'},
+          {'word': 'orange', 'clue': 'A citrus fruit or color'},
+          {'word': 'parrot', 'clue': 'A colorful talking bird'},
+          {'word': 'quiver', 'clue': 'To shake with a slight motion'},
+          {'word': 'rabbit', 'clue': 'A small furry animal with long ears'},
+          {'word': 'salmon', 'clue': 'A pink fish that swims upstream'},
+          {'word': 'tunnel', 'clue': 'An underground passage'},
+          {'word': 'velvet', 'clue': 'A soft luxurious fabric'},
+          {'word': 'wallet', 'clue': 'A pocket case for money'},
+          {'word': 'yogurt', 'clue': 'A dairy product made from milk'},
+          {'word': 'zombie', 'clue': 'An undead creature in fiction'},
+          {'word': 'button', 'clue': 'A small disc for fastening'},
+          {'word': 'circus', 'clue': 'A traveling show with performers'},
+          {'word': 'donkey', 'clue': 'An animal related to horses'},
+          {'word': 'fabric', 'clue': 'Material made by weaving'},
+          {'word': 'ginger', 'clue': 'A spicy root used in cooking'},
+          {'word': 'harbor', 'clue': 'A sheltered port for ships'},
+        ];
+      case HangmanDifficulty.hard:
+        return [
+          {'word': 'adventure', 'clue': 'An unusual and exciting experience'},
+          {'word': 'beautiful', 'clue': 'Pleasing to the senses aesthetically'},
+          {'word': 'challenge', 'clue': 'A call to prove something'},
+          {'word': 'discovery', 'clue': 'The action of finding something new'},
+          {'word': 'excellent', 'clue': 'Extremely good or outstanding'},
+          {'word': 'knowledge', 'clue': 'Facts acquired through experience'},
+          {'word': 'mysterious', 'clue': 'Difficult to understand'},
+          {'word': 'dangerous', 'clue': 'Likely to cause harm'},
+          {'word': 'incredible', 'clue': 'Impossible to believe'},
+          {'word': 'nightmare', 'clue': 'A frightening dream'},
+          {'word': 'celebrate', 'clue': 'To honor a special occasion'},
+          {'word': 'important', 'clue': 'Of great significance'},
+          {'word': 'wondering', 'clue': 'Feeling curious about something'},
+          {'word': 'forgotten', 'clue': 'No longer remembered'},
+          {'word': 'butterfly', 'clue': 'An insect with colorful wings'},
+          {'word': 'chocolate', 'clue': 'A sweet food from cacao beans'},
+          {'word': 'sparkling', 'clue': 'Shining with bright light'},
+          {'word': 'brilliant', 'clue': 'Exceptionally clever'},
+          {'word': 'wonderful', 'clue': 'Inspiring delight'},
+          {'word': 'amazement', 'clue': 'A feeling of great surprise'},
+          {'word': 'beginning', 'clue': 'The start of something'},
+          {'word': 'community', 'clue': 'A group of people living together'},
+          {'word': 'different', 'clue': 'Not the same as another'},
+          {'word': 'education', 'clue': 'The process of learning'},
+          {'word': 'fantastic', 'clue': 'Extraordinarily good'},
+          {'word': 'generally', 'clue': 'In most cases'},
+          {'word': 'happiness', 'clue': 'The state of being happy'},
+          {'word': 'imaginary', 'clue': 'Existing only in the mind'},
+          {'word': 'jealousy', 'clue': 'Envy of someone else'},
+          {'word': 'kindheart', 'clue': 'Having a generous nature'},
+          {'word': 'landscape', 'clue': 'A view of natural scenery'},
+          {'word': 'marvelous', 'clue': 'Causing great wonder'},
+          {'word': 'naturally', 'clue': 'In a natural manner'},
+          {'word': 'operation', 'clue': 'An organized activity'},
+          {'word': 'practical', 'clue': 'Concerned with actual use'},
+          {'word': 'questions', 'clue': 'Sentences asking for information'},
+          {'word': 'rainforest', 'clue': 'A dense tropical forest'},
+          {'word': 'something', 'clue': 'An unspecified thing'},
+          {'word': 'telephone', 'clue': 'A device for voice communication'},
+          {'word': 'umbrella', 'clue': 'Protection from rain'},
+          {'word': 'vegetable', 'clue': 'An edible plant'},
+          {'word': 'wonderful', 'clue': 'Extremely good'},
+          {'word': 'xylophone', 'clue': 'A musical percussion instrument'},
+          {'word': 'yesterday', 'clue': 'The day before today'},
+          {'word': 'ambitious', 'clue': 'Having strong desire for success'},
+          {'word': 'breakfast', 'clue': 'The first meal of the day'},
+          {'word': 'champagne', 'clue': 'A sparkling wine from France'},
+          {'word': 'delicious', 'clue': 'Highly pleasant to taste'},
+          {'word': 'emergency', 'clue': 'A serious unexpected situation'},
+          {'word': 'fireplace', 'clue': 'A structure for indoor fires'},
+        ];
+    }
   }
 
   void _guessLetter(String letter) {
