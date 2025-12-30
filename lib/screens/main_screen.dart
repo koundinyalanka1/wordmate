@@ -59,73 +59,90 @@ class _MainScreenState extends State<MainScreen> {
           const SettingsScreen(),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Bottom Navigation
-          Container(
-            decoration: BoxDecoration(
-              color: colors.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          final bottomPadding = MediaQuery.of(context).padding.bottom;
+          final hasAd = _adService.isBannerAdLoaded && _adService.bannerAd != null;
+          
+          // Layout from top to bottom:
+          // 1. Navigation bar (always)
+          // 2. Banner ad (if loaded)
+          // 3. System button padding (if buttons exist, i.e. bottomPadding > 0)
+          
+          return Container(
+            color: colors.surface,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Navigation bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _NavBarItem(
+                          icon: Icons.search_rounded,
+                          label: 'Search',
+                          isSelected: _currentIndex == 0,
+                          onTap: () => setState(() => _currentIndex = 0),
+                          colors: colors,
+                        ),
+                        _NavBarItem(
+                          icon: Icons.auto_awesome,
+                          label: 'Today',
+                          isSelected: _currentIndex == 1,
+                          onTap: () => setState(() => _currentIndex = 1),
+                          colors: colors,
+                        ),
+                        _NavBarItem(
+                          icon: Icons.games_rounded,
+                          label: 'Game',
+                          isSelected: _currentIndex == 2,
+                          onTap: () => setState(() => _currentIndex = 2),
+                          colors: colors,
+                        ),
+                        _NavBarItem(
+                          icon: Icons.settings_rounded,
+                          label: 'Settings',
+                          isSelected: _currentIndex == 3,
+                          onTap: () => setState(() => _currentIndex = 3),
+                          colors: colors,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+                // 2. Banner ad (centered, full width container)
+                if (hasAd)
+                  Container(
+                    color: colors.surface,
+                    width: double.infinity,
+                    height: _adService.bannerAd!.size.height.toDouble(),
+                    alignment: Alignment.center,
+                    child: SizedBox(
+                      width: _adService.bannerAd!.size.width.toDouble(),
+                      height: _adService.bannerAd!.size.height.toDouble(),
+                      child: AdWidget(ad: _adService.bannerAd!),
+                    ),
+                  ),
+                // 3. System button padding (only if device has button navigation)
+                if (bottomPadding > 0)
+                  SizedBox(height: bottomPadding),
               ],
             ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _NavBarItem(
-                      icon: Icons.search_rounded,
-                      label: 'Search',
-                      isSelected: _currentIndex == 0,
-                      onTap: () => setState(() => _currentIndex = 0),
-                      colors: colors,
-                    ),
-                    _NavBarItem(
-                      icon: Icons.auto_awesome,
-                      label: 'Today',
-                      isSelected: _currentIndex == 1,
-                      onTap: () => setState(() => _currentIndex = 1),
-                      colors: colors,
-                    ),
-                    _NavBarItem(
-                      icon: Icons.games_rounded,
-                      label: 'Game',
-                      isSelected: _currentIndex == 2,
-                      onTap: () => setState(() => _currentIndex = 2),
-                      colors: colors,
-                    ),
-                    _NavBarItem(
-                      icon: Icons.settings_rounded,
-                      label: 'Settings',
-                      isSelected: _currentIndex == 3,
-                      onTap: () => setState(() => _currentIndex = 3),
-                      colors: colors,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Banner Ad
-          if (_adService.isBannerAdLoaded && _adService.bannerAd != null)
-            SafeArea(
-              top: false,
-              child: Container(
-                color: colors.surface,
-                width: _adService.bannerAd!.size.width.toDouble(),
-                height: _adService.bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: _adService.bannerAd!),
-              ),
-            ),
-        ],
+          );
+        },
       ),
     );
   }
