@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'providers/dictionary_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/game_settings_provider.dart';
@@ -11,6 +12,9 @@ import 'services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp();
   
   // Load config (API keys, etc.)
   await ConfigService.instance.load();

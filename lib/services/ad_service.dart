@@ -62,13 +62,13 @@ class AdService extends ChangeNotifier {
         onAdLoaded: (ad) {
           _isBannerAdLoaded = true;
           notifyListeners(); // Notify UI to rebuild
-          debugPrint('Banner ad loaded successfully');
+          if (kDebugMode) debugPrint('Banner ad loaded successfully');
         },
         onAdFailedToLoad: (ad, error) {
           _isBannerAdLoaded = false;
           ad.dispose();
           _bannerAd = null;
-          debugPrint('Banner ad failed to load: ${error.message} (code: ${error.code})');
+          if (kDebugMode) debugPrint('Banner ad failed: ${error.message} (${error.code})');
           // Retry after delay - "No fill" is normal, just retry later
           Future.delayed(const Duration(seconds: 60), loadBannerAd);
         },
@@ -85,7 +85,7 @@ class AdService extends ChangeNotifier {
         onAdLoaded: (ad) {
           _interstitialAd = ad;
           _isInterstitialAdLoaded = true;
-          debugPrint('Interstitial ad loaded');
+          if (kDebugMode) debugPrint('Interstitial ad loaded');
           
           ad.fullScreenContentCallback = FullScreenContentCallback(
             onAdDismissedFullScreenContent: (ad) {
@@ -102,7 +102,7 @@ class AdService extends ChangeNotifier {
         },
         onAdFailedToLoad: (error) {
           _isInterstitialAdLoaded = false;
-          debugPrint('Interstitial ad failed to load: $error');
+          if (kDebugMode) debugPrint('Interstitial ad failed: $error');
           // Retry after delay
           Future.delayed(const Duration(seconds: 30), loadInterstitialAd);
         },
