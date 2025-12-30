@@ -53,6 +53,7 @@ class AdService extends ChangeNotifier {
 
   /// Load banner ad
   void loadBannerAd() {
+    _bannerAd?.dispose();
     _bannerAd = BannerAd(
       adUnitId: _bannerAdUnitId,
       size: AdSize.banner,
@@ -61,14 +62,15 @@ class AdService extends ChangeNotifier {
         onAdLoaded: (ad) {
           _isBannerAdLoaded = true;
           notifyListeners(); // Notify UI to rebuild
-          debugPrint('Banner ad loaded');
+          debugPrint('Banner ad loaded successfully');
         },
         onAdFailedToLoad: (ad, error) {
           _isBannerAdLoaded = false;
           ad.dispose();
-          debugPrint('Banner ad failed to load: $error');
-          // Retry after delay
-          Future.delayed(const Duration(seconds: 30), loadBannerAd);
+          _bannerAd = null;
+          debugPrint('Banner ad failed to load: ${error.message} (code: ${error.code})');
+          // Retry after delay - "No fill" is normal, just retry later
+          Future.delayed(const Duration(seconds: 60), loadBannerAd);
         },
       ),
     )..load();
