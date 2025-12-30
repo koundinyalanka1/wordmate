@@ -35,3 +35,6 @@ flutter:
   
   assets:
     - assets/words.txt
+    - assets/easy.txt
+    - assets/medium.txt
+    - assets/hard.txt

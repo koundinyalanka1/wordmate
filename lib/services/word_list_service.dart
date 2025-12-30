@@ -1,9 +1,14 @@
 import 'dart:math';
 import 'package:flutter/services.dart';
+import '../providers/game_settings_provider.dart';
 
 class WordListService {
   List<String> _words = [];
   bool _isLoaded = false;
+  
+  // Difficulty-specific word lists
+  final Map<HangmanDifficulty, List<String>> _difficultyWords = {};
+  final Map<HangmanDifficulty, bool> _difficultyLoaded = {};
 
   bool get isLoaded => _isLoaded;
   int get wordCount => _words.length;
@@ -25,6 +30,36 @@ class WordListService {
     }
   }
 
+  /// Load words for a specific difficulty level
+  Future<void> loadWordsForDifficulty(HangmanDifficulty difficulty) async {
+    if (_difficultyLoaded[difficulty] == true) return;
+
+    try {
+      final String fileName = _getFileNameForDifficulty(difficulty);
+      final String data = await rootBundle.loadString('assets/$fileName');
+      _difficultyWords[difficulty] = data
+          .split('\n')
+          .map((word) => word.trim())
+          .where((word) => word.isNotEmpty && _isValidWordForGame(word))
+          .toList();
+      _difficultyLoaded[difficulty] = true;
+    } catch (e) {
+      _difficultyWords[difficulty] = [];
+      _difficultyLoaded[difficulty] = false;
+    }
+  }
+
+  String _getFileNameForDifficulty(HangmanDifficulty difficulty) {
+    switch (difficulty) {
+      case HangmanDifficulty.easy:
+        return 'easy.txt';
+      case HangmanDifficulty.medium:
+        return 'medium.txt';
+      case HangmanDifficulty.hard:
+        return 'hard.txt';
+    }
+  }
+
   // Filter out words with special characters for cleaner suggestions
   bool _isValidWord(String word) {
     // Filter out very short words
@@ -35,6 +70,20 @@ class WordListService {
     
     // Skip words with multiple hyphens (compound phrases)
     if (word.contains('-') && word.split('-').length > 2) return false;
+    
+    return true;
+  }
+
+  // Stricter validation for hangman game words
+  bool _isValidWordForGame(String word) {
+    // Only allow words with letters only (no hyphens, spaces, or special chars)
+    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(word)) return false;
+    
+    // Filter out very short words (less than 3 letters)
+    if (word.length < 3) return false;
+    
+    // Filter out very long words (more than 15 letters)
+    if (word.length > 15) return false;
     
     return true;
   }
@@ -98,7 +147,7 @@ class WordListService {
     return interestingWords[random.nextInt(interestingWords.length)];
   }
 
-  /// Get a random word (for any purpose)
+  /// Get a random word (for any purpose) - legacy method
   String getRandomWord() {
     if (!_isLoaded || _words.isEmpty) {
       return 'word';
@@ -106,5 +155,36 @@ class WordListService {
 
     final random = Random();
     return _words[random.nextInt(_words.length)];
+  }
+
+  /// Get a random word for hangman game based on difficulty
+  /// Returns a shuffled list of words from the difficulty file
+  List<String> getShuffledWordsForDifficulty(HangmanDifficulty difficulty) {
+    final words = _difficultyWords[difficulty];
+    if (words == null || words.isEmpty) {
+      return _getFallbackWords(difficulty);
+    }
+
+    final shuffled = List<String>.from(words);
+    shuffled.shuffle(Random());
+    return shuffled;
+  }
+
+  /// Check if words are loaded for a specific difficulty
+  bool isLoadedForDifficulty(HangmanDifficulty difficulty) {
+    return _difficultyLoaded[difficulty] == true && 
+           (_difficultyWords[difficulty]?.isNotEmpty ?? false);
+  }
+
+  /// Get fallback words if the difficulty file is not loaded
+  List<String> _getFallbackWords(HangmanDifficulty difficulty) {
+    switch (difficulty) {
+      case HangmanDifficulty.easy:
+        return ['cat', 'dog', 'sun', 'moon', 'star', 'tree', 'book', 'fish', 'bird', 'hand'];
+      case HangmanDifficulty.medium:
+        return ['happy', 'world', 'music', 'dream', 'light', 'ocean', 'garden', 'friend'];
+      case HangmanDifficulty.hard:
+        return ['adventure', 'beautiful', 'challenge', 'discovery', 'excellent', 'fantastic'];
+    }
   }
 }

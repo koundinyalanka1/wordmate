@@ -47,6 +47,9 @@ class _HangmanScreenState extends State<HangmanScreen> {
     setState(() => _isLoading = true);
     await _loadScore();
     await _wordListService.loadWords();
+    // Load words for the current difficulty
+    final difficulty = context.read<GameSettingsProvider>().difficulty;
+    await _wordListService.loadWordsForDifficulty(difficulty);
     await _startNewGame();
   }
 
@@ -73,58 +76,55 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
     // Get difficulty settings
     final difficulty = context.read<GameSettingsProvider>().difficulty;
-    final minLength = difficulty.minLength;
-    final maxLength = difficulty.maxLength;
 
-    // Get a random word based on difficulty
+    // Ensure words are loaded for this difficulty
+    if (!_wordListService.isLoadedForDifficulty(difficulty)) {
+      await _wordListService.loadWordsForDifficulty(difficulty);
+    }
+
+    // Get shuffled words from the difficulty-specific file
+    final shuffledWords = _wordListService.getShuffledWordsForDifficulty(difficulty);
+    
     String word = '';
     String? clue;
     
-    // Try to find a word with a valid definition
-    for (int attempt = 0; attempt < 10; attempt++) {
-      for (int i = 0; i < 30; i++) {
-        final candidate = _wordListService.getRandomWord();
-        if (candidate.length >= minLength && 
-            candidate.length <= maxLength && 
-            RegExp(r'^[a-zA-Z]+$').hasMatch(candidate)) {
-          word = candidate.toLowerCase();
-          break;
-        }
-      }
-      
-      // Fallback words based on difficulty
-      if (word.isEmpty) {
-        switch (difficulty) {
-          case HangmanDifficulty.easy:
-            word = 'word';
-          case HangmanDifficulty.medium:
-            word = 'flutter';
-          case HangmanDifficulty.hard:
-            word = 'developer';
-        }
-      }
-
-      // Try to fetch definition
+    // Iterate through shuffled words until we find one with a valid definition
+    for (final candidate in shuffledWords) {
+      // Try to fetch definition for this word
       try {
-        final entries = await _dictionaryService.getDefinition(word);
+        final entries = await _dictionaryService.getDefinition(candidate.toLowerCase());
         if (entries.isNotEmpty && entries.first.meanings.isNotEmpty) {
           final firstMeaning = entries.first.meanings.first;
           if (firstMeaning.definitions.isNotEmpty) {
-            clue = firstMeaning.definitions.first.definition;
-            break; // Found a word with a definition
+            final definition = firstMeaning.definitions.first.definition;
+            // Make sure definition doesn't contain the word itself (that would be a giveaway)
+            if (definition.isNotEmpty && 
+                !definition.toLowerCase().contains(candidate.toLowerCase())) {
+              word = candidate.toLowerCase();
+              clue = definition;
+              break; // Found a word with a valid definition
+            }
           }
         }
       } catch (e) {
-        // Word not found in dictionary, try another
-        word = '';
+        // Word not found in dictionary, continue to next word
         continue;
       }
     }
 
-    // Fallback if no definition found
+    // Fallback if no word with definition found
     if (word.isEmpty) {
-      word = 'flutter';
-      clue = 'A popular cross-platform framework for building mobile apps';
+      switch (difficulty) {
+        case HangmanDifficulty.easy:
+          word = 'happy';
+          clue = 'Feeling or showing pleasure or contentment';
+        case HangmanDifficulty.medium:
+          word = 'flutter';
+          clue = 'A popular cross-platform framework for building mobile apps';
+        case HangmanDifficulty.hard:
+          word = 'beautiful';
+          clue = 'Pleasing the senses or mind aesthetically';
+      }
     }
 
     final targetWord = word.toUpperCase();
@@ -220,8 +220,9 @@ class _HangmanScreenState extends State<HangmanScreen> {
     // If difficulty changed and we're not already loading, start a new game
     if (_currentDifficulty != null && _currentDifficulty != newDifficulty && !_isLoading) {
       _currentDifficulty = newDifficulty;
-      // Schedule new game after build completes
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Schedule new game after build completes, load words for new difficulty first
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _wordListService.loadWordsForDifficulty(newDifficulty);
         _startNewGame();
       });
     } else if (_currentDifficulty == null) {
