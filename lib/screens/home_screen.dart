@@ -35,29 +35,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Sync search bar with provider's current search word
-    _syncSearchBar();
-  }
-
-  void _syncSearchBar() {
-    final provider = context.read<DictionaryProvider>();
-    final currentWord = provider.currentSearchWord;
-    
-    // Only update if the word changed and is different from what's in the controller
-    if (currentWord != null && 
-        currentWord != _lastSyncedWord && 
-        currentWord != _searchController.text) {
-      _searchController.text = currentWord;
-      _lastSyncedWord = currentWord;
-    } else if (currentWord == null && _lastSyncedWord != null) {
-      _searchController.clear();
-      _lastSyncedWord = null;
-    }
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     _animationController.dispose();
@@ -80,15 +57,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     
-    // Sync search bar when provider changes (e.g., from Hangman lookup)
+    // Sync search bar only when a NEW word is searched externally (e.g., from Hangman)
     final provider = context.watch<DictionaryProvider>();
-    if (provider.currentSearchWord != null && 
-        provider.currentSearchWord != _searchController.text) {
+    final currentWord = provider.currentSearchWord;
+    if (currentWord != null && currentWord != _lastSyncedWord) {
+      _lastSyncedWord = currentWord;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && provider.currentSearchWord != _searchController.text) {
-          _searchController.text = provider.currentSearchWord!;
+        if (mounted) {
+          _searchController.text = currentWord;
         }
       });
+    } else if (currentWord == null && _lastSyncedWord != null) {
+      _lastSyncedWord = null;
     }
 
     return Scaffold(

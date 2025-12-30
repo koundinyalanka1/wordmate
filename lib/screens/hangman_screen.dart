@@ -209,6 +209,15 @@ class _HangmanScreenState extends State<HangmanScreen> {
     }
   }
 
+  void _revealAnswer() {
+    setState(() {
+      _gameOver = true;
+      _hasWon = false;
+      _gamesPlayed++;
+      _saveScore();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
@@ -404,8 +413,26 @@ class _HangmanScreenState extends State<HangmanScreen> {
                           // Game over message or keyboard
                           if (_gameOver)
                             _buildGameOverMessage(colors)
-                          else
+                          else ...[
                             _buildKeyboard(colors),
+                            const SizedBox(height: 24),
+                            // Reveal answer button
+                            TextButton.icon(
+                              onPressed: _revealAnswer,
+                              icon: Icon(
+                                Icons.visibility_rounded,
+                                size: 18,
+                                color: colors.textMuted,
+                              ),
+                              label: Text(
+                                'Reveal Answer',
+                                style: TextStyle(color: colors.textMuted),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 100),
                         ],
