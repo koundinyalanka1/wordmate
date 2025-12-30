@@ -94,23 +94,22 @@ class WordDetailCard extends StatelessWidget {
                     else
                       const SizedBox.shrink(),
                     
-                    // Audio button only
-                    if (entry.audioUrl != null)
-                      GestureDetector(
-                        onTap: () => provider.playPronunciation(entry.audioUrl),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colors.accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.volume_up_rounded,
-                            color: colors.accent,
-                            size: 20,
-                          ),
+                    // Audio button - uses TTS
+                    GestureDetector(
+                      onTap: () => provider.speakWord(entry.word),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.volume_up_rounded,
+                          color: colors.accent,
+                          size: 20,
                         ),
                       ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),

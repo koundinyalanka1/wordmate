@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../models/word_entry.dart';
 import '../services/dictionary_service.dart';
 import '../services/storage_service.dart';
@@ -13,7 +13,7 @@ class DictionaryProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   final WordListService _wordListService = WordListService();
   final PixabayService _pixabayService = PixabayService();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterTts _flutterTts = FlutterTts();
 
   SearchState _searchState = SearchState.idle;
   List<WordEntry> _currentEntries = [];
@@ -48,11 +48,19 @@ class DictionaryProvider extends ChangeNotifier {
   Future<void> init() async {
     await _storageService.init();
     await _wordListService.loadWords();
+    await _initTts();
     await _loadFavorites();
     await _loadHistory();
     await _loadWordOfTheDay();
     _isInitialized = true;
     notifyListeners();
+  }
+
+  Future<void> _initTts() async {
+    await _flutterTts.setLanguage('en-US');
+    await _flutterTts.setSpeechRate(0.4); // Slower for clarity
+    await _flutterTts.setVolume(1.0);
+    await _flutterTts.setPitch(1.0);
   }
 
   Future<void> _loadFavorites() async {
@@ -193,19 +201,19 @@ class DictionaryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> playPronunciation(String? audioUrl) async {
-    if (audioUrl == null || audioUrl.isEmpty) return;
-
+  /// Speak any word using Text-to-Speech
+  Future<void> speakWord(String word) async {
     try {
-      await _audioPlayer.play(UrlSource(audioUrl));
+      await _flutterTts.stop(); // Stop any ongoing speech
+      await _flutterTts.speak(word);
     } catch (e) {
-      debugPrint('Failed to play audio: $e');
+      debugPrint('Failed to speak word: $e');
     }
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _flutterTts.stop();
     super.dispose();
   }
 }
