@@ -229,7 +229,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'A beautiful dictionary app to explore words, save favorites, and expand your vocabulary.',
+                            'A beautiful dictionary app to explore words, play hangman, and expand your vocabulary.',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: colors.textSecondary,
                             ),
@@ -271,7 +271,7 @@ class SettingsScreen extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Powered by Free Dictionary API',
+                                  'Powered by Free Dictionary API and Pixabay',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: colors.textMuted,
                                   ),

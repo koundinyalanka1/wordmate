@@ -6,6 +6,8 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+-keep class com.google.android.play.core.** { *; }
+
 # Google Mobile Ads (AdMob)
 -keep class com.google.android.gms.ads.** { *; }
 -keep class com.google.ads.** { *; }

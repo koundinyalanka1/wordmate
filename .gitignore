@@ -8,6 +8,7 @@ android/*.keystore
 *.jks
 *.keystore
 upload_certificate.pem
+android/app/google-services.json
 
 # Miscellaneous
 *.class
