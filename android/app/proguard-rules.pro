@@ -6,7 +6,11 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# Google Play Core (for deferred components - ignore if not using)
 -keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
 
 # Google Mobile Ads (AdMob)
 -keep class com.google.android.gms.ads.** { *; }

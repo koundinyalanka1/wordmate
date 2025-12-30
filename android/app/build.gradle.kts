@@ -75,8 +75,10 @@ android {
 
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
-
     implementation("com.google.firebase:firebase-analytics")
+    
+    // Play Core library (required for R8 with Flutter deferred components)
+    implementation("com.google.android.play:core:1.10.3")
 }
 
 flutter {
