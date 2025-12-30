@@ -6,7 +6,8 @@ class DictionaryService {
   static const String _baseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
   Future<List<WordEntry>> getDefinition(String word) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$word'));
+    final response = await http.get(Uri.parse('$_baseUrl/$word'))
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);

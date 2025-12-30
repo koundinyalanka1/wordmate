@@ -60,11 +60,11 @@ class PixabayService {
       'q': query.trim(),
       'per_page': perPage.toString(),
       'image_type': 'photo',
-      'safesearch': 'false',
+      'safesearch': 'true',
     });
 
     try {
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
