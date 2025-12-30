@@ -22,7 +22,7 @@ class AdService extends ChangeNotifier {
   // Test Ad Unit IDs - Replace with your real IDs for production
   String get _bannerAdUnitId {
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111'; // Android test banner
+      return 'ca-app-pub-2596031675923197/4095152632'; // Android test banner
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/2934735716'; // iOS test banner
     }
@@ -31,7 +31,7 @@ class AdService extends ChangeNotifier {
 
   String get _interstitialAdUnitId {
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712'; // Android test interstitial
+      return 'ca-app-pub-2596031675923197/6717446540'; // Android test interstitial
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/4411468910'; // iOS test interstitial
     }
