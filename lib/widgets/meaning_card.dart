@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/word_entry.dart';
+import '../providers/dictionary_provider.dart';
 import '../theme/app_theme.dart';
 
 class MeaningCard extends StatelessWidget {
@@ -91,6 +93,23 @@ class MeaningCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      // TTS button for definition
+                      GestureDetector(
+                        onTap: () => context.read<DictionaryProvider>().speakWord(definition.definition),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.volume_up_rounded,
+                            color: colors.textMuted,
+                            size: 16,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -126,6 +145,16 @@ class MeaningCard extends StatelessWidget {
                                 fontStyle: FontStyle.italic,
                                 color: colors.textSecondary,
                               ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // TTS button for example
+                          GestureDetector(
+                            onTap: () => context.read<DictionaryProvider>().speakWord(definition.example!),
+                            child: Icon(
+                              Icons.volume_up_rounded,
+                              color: colors.textMuted,
+                              size: 16,
                             ),
                           ),
                         ],
