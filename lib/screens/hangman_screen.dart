@@ -35,6 +35,11 @@ class _HangmanScreenState extends State<HangmanScreen> {
   static const int _maxWrongGuesses = 6;
   static const String _scoreKey = 'hangman_score';
   static const String _gamesKey = 'hangman_games';
+  
+  // Word cache for instant loading
+  final Map<HangmanDifficulty, List<Map<String, String>>> _wordCache = {};
+  bool _isCaching = false;
+  Set<String> _usedWords = {}; // Track used words to avoid repeats
 
   @override
   void initState() {
@@ -76,58 +81,44 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
     // Get difficulty settings
     final difficulty = context.read<GameSettingsProvider>().difficulty;
-
-    // Ensure words are loaded for this difficulty
-    if (!_wordListService.isLoadedForDifficulty(difficulty)) {
-      await _wordListService.loadWordsForDifficulty(difficulty);
-    }
-
-    // Get shuffled words from the difficulty-specific file
-    final shuffledWords = _wordListService.getShuffledWordsForDifficulty(difficulty);
     
     String word = '';
     String? clue;
     
-    // Only try a limited number of words to avoid long loading times
-    const maxAttempts = 8;
-    int attempts = 0;
-    
-    // Iterate through shuffled words until we find one with a valid definition
-    for (final candidate in shuffledWords) {
-      if (attempts >= maxAttempts) break;
-      attempts++;
-      
-      // Try to fetch definition for this word
-      try {
-        final entries = await _dictionaryService.getDefinition(candidate.toLowerCase());
-        if (entries.isNotEmpty && entries.first.meanings.isNotEmpty) {
-          final firstMeaning = entries.first.meanings.first;
-          if (firstMeaning.definitions.isNotEmpty) {
-            final definition = firstMeaning.definitions.first.definition;
-            // Make sure definition doesn't contain the word itself (that would be a giveaway)
-            if (definition.isNotEmpty && 
-                !definition.toLowerCase().contains(candidate.toLowerCase())) {
-              word = candidate.toLowerCase();
-              clue = definition;
-              break; // Found a word with a valid definition
-            }
-          }
-        }
-      } catch (e) {
-        // Word not found in dictionary, continue to next word
-        continue;
-      }
-    }
-
-    // Fallback if no word with definition found
-    if (word.isEmpty) {
+    // Check cache first for instant loading
+    final cache = _wordCache[difficulty];
+    if (cache != null && cache.isNotEmpty) {
+      // Use cached word
+      final cachedWord = cache.removeAt(0);
+      word = cachedWord['word']!;
+      clue = cachedWord['clue']!;
+      _usedWords.add(word);
+    } else {
+      // No cache - use fallback instantly
       final fallbacks = _getFallbackWords(difficulty);
-      final randomIndex = Random().nextInt(fallbacks.length);
-      word = fallbacks[randomIndex]['word']!;
-      clue = fallbacks[randomIndex]['clue']!;
+      // Find a fallback word we haven't used yet
+      final availableFallbacks = fallbacks.where(
+        (f) => !_usedWords.contains(f['word']!.toLowerCase())
+      ).toList();
+      
+      if (availableFallbacks.isNotEmpty) {
+        final randomIndex = Random().nextInt(availableFallbacks.length);
+        word = availableFallbacks[randomIndex]['word']!;
+        clue = availableFallbacks[randomIndex]['clue']!;
+      } else {
+        // All fallbacks used, reset and pick random
+        _usedWords.clear();
+        final randomIndex = Random().nextInt(fallbacks.length);
+        word = fallbacks[randomIndex]['word']!;
+        clue = fallbacks[randomIndex]['clue']!;
+      }
+      _usedWords.add(word);
     }
 
     final targetWord = word.toUpperCase();
+    
+    // Start caching words in background for next games
+    _cacheWordsInBackground(difficulty);
     
     // Get unique letters in the word
     final uniqueLetters = targetWord.split('').toSet().toList();
@@ -165,6 +156,65 @@ class _HangmanScreenState extends State<HangmanScreen> {
       _clue = clue;
       _showClue = false;
     });
+  }
+
+  /// Cache words with definitions in background while user plays
+  Future<void> _cacheWordsInBackground(HangmanDifficulty difficulty) async {
+    // Don't start another caching if one is running
+    if (_isCaching) return;
+    
+    // Initialize cache for this difficulty if needed
+    _wordCache[difficulty] ??= [];
+    
+    // Only cache if we have less than 3 words ready
+    if (_wordCache[difficulty]!.length >= 3) return;
+    
+    _isCaching = true;
+    
+    // Ensure word list is loaded
+    if (!_wordListService.isLoadedForDifficulty(difficulty)) {
+      await _wordListService.loadWordsForDifficulty(difficulty);
+    }
+    
+    // Get shuffled words from the difficulty-specific file
+    final shuffledWords = _wordListService.getShuffledWordsForDifficulty(difficulty);
+    
+    // Try to cache up to 4 words
+    int cached = 0;
+    for (final candidate in shuffledWords) {
+      if (cached >= 4) break;
+      if (!mounted) break;
+      
+      // Skip already used or cached words
+      final lowerCandidate = candidate.toLowerCase();
+      if (_usedWords.contains(lowerCandidate)) continue;
+      if (_wordCache[difficulty]!.any((w) => w['word'] == lowerCandidate)) continue;
+      
+      // Try to fetch definition
+      try {
+        final entries = await _dictionaryService.getDefinition(lowerCandidate);
+        if (entries.isNotEmpty && entries.first.meanings.isNotEmpty) {
+          final firstMeaning = entries.first.meanings.first;
+          if (firstMeaning.definitions.isNotEmpty) {
+            final definition = firstMeaning.definitions.first.definition;
+            // Make sure definition doesn't contain the word itself
+            if (definition.isNotEmpty && 
+                !definition.toLowerCase().contains(lowerCandidate)) {
+              _wordCache[difficulty]!.add({
+                'word': lowerCandidate,
+                'clue': definition,
+              });
+              cached++;
+            }
+          }
+        }
+      } catch (e) {
+        // Word not found, continue to next
+        continue;
+      }
+    }
+    
+    _isCaching = false;
   }
 
   List<Map<String, String>> _getFallbackWords(HangmanDifficulty difficulty) {
