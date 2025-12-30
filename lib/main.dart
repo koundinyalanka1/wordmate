@@ -7,12 +7,16 @@ import 'providers/game_settings_provider.dart';
 import 'screens/main_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/config_service.dart';
+import 'services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load config (API keys, etc.)
   await ConfigService.instance.load();
+  
+  // Initialize AdMob
+  await AdService.instance.initialize();
   
   runApp(const WordMateApp());
 }

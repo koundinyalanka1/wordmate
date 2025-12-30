@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/game_settings_provider.dart';
 import '../services/dictionary_service.dart';
 import '../services/word_list_service.dart';
+import '../services/ad_service.dart';
 import '../theme/app_theme.dart';
 
 class HangmanScreen extends StatefulWidget {
@@ -78,6 +79,9 @@ class _HangmanScreenState extends State<HangmanScreen> {
       _clue = null;
       _showClue = false;
     });
+
+    // Show interstitial ad every 3rd or 4th game randomly
+    await AdService.instance.onNewGame();
 
     // Get difficulty settings
     final difficulty = context.read<GameSettingsProvider>().difficulty;
@@ -423,7 +427,10 @@ class _HangmanScreenState extends State<HangmanScreen> {
     }
   }
 
-  void _revealAnswer() {
+  void _revealAnswer() async {
+    // Show interstitial ad when revealing answer
+    await AdService.instance.showInterstitialForReveal();
+    
     setState(() {
       _gameOver = true;
       _hasWon = false;
