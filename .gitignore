@@ -1,6 +1,14 @@
 # API Keys and secrets
 assets/config.json
 
+# Keystore and signing
+android/key.properties
+android/*.jks
+android/*.keystore
+*.jks
+*.keystore
+upload_certificate.pem
+
 # Miscellaneous
 *.class
 *.log
