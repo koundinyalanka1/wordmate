@@ -241,30 +241,14 @@ class _ImageSliderState extends State<ImageSlider> {
                     ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        image.tags.split(',').first.trim(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (image.user != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        '📷 ${image.user}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  image.tags.split(',').first.trim(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

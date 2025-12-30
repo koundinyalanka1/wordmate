@@ -60,7 +60,7 @@ class PixabayService {
       'q': query.trim(),
       'per_page': perPage.toString(),
       'image_type': 'photo',
-      'safesearch': 'true',
+      'safesearch': 'false',
     });
 
     try {
@@ -69,7 +69,19 @@ class PixabayService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> hits = data['hits'] ?? [];
-        return hits.map((hit) => PixabayImage.fromJson(hit)).toList();
+        final images = hits.map((hit) => PixabayImage.fromJson(hit)).toList();
+        
+        // Sort images: those with tags containing the search word come first
+        final searchLower = query.trim().toLowerCase();
+        images.sort((a, b) {
+          final aContains = a.tags.toLowerCase().contains(searchLower);
+          final bContains = b.tags.toLowerCase().contains(searchLower);
+          if (aContains && !bContains) return -1;
+          if (!aContains && bContains) return 1;
+          return 0;
+        });
+        
+        return images;
       } else {
         throw PixabayException('Failed to fetch images: ${response.statusCode}');
       }
