@@ -1,3 +1,6 @@
+# API Keys and secrets
+assets/config.json
+
 # Miscellaneous
 *.class
 *.log

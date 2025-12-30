@@ -38,3 +38,4 @@ flutter:
     - assets/easy.txt
     - assets/medium.txt
     - assets/hard.txt
+    - assets/config.json

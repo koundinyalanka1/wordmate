@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'config_service.dart';
 
 class PixabayImage {
   final int id;
@@ -37,15 +39,24 @@ class PixabayImage {
 }
 
 class PixabayService {
-  // Replace with your Pixabay API key from https://pixabay.com/api/docs/
-  static const String _apiKey = '49abordc-YOUR_API_KEY_HERE';
   static const String _baseUrl = 'https://pixabay.com/api/';
 
   Future<List<PixabayImage>> searchImages(String query, {int perPage = 10}) async {
     if (query.trim().isEmpty) return [];
 
+    // Get API key from config
+    final config = ConfigService.instance;
+    if (!config.isLoaded) {
+      await config.load();
+    }
+
+    if (!config.hasPixabayApiKey) {
+      debugPrint('Pixabay API key not configured. Add your key to assets/config.json');
+      return [];
+    }
+
     final uri = Uri.parse(_baseUrl).replace(queryParameters: {
-      'key': _apiKey,
+      'key': config.pixabayApiKey,
       'q': query.trim(),
       'per_page': perPage.toString(),
       'image_type': 'photo',
@@ -76,4 +87,3 @@ class PixabayException implements Exception {
   @override
   String toString() => message;
 }
-
