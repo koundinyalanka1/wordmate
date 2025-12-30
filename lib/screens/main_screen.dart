@@ -18,6 +18,26 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final AdService _adService = AdService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to ad service changes
+    _adService.addListener(_onAdServiceChanged);
+  }
+
+  @override
+  void dispose() {
+    _adService.removeListener(_onAdServiceChanged);
+    super.dispose();
+  }
+
+  void _onAdServiceChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   void _searchWord(String word) {
     // Switch to home tab and search
@@ -28,7 +48,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final adService = AdService.instance;
 
     return Scaffold(
       body: IndexedStack(
@@ -96,14 +115,14 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           // Banner Ad
-          if (adService.isBannerAdLoaded && adService.bannerAd != null)
+          if (_adService.isBannerAdLoaded && _adService.bannerAd != null)
             SafeArea(
               top: false,
               child: Container(
                 color: colors.surface,
-                width: adService.bannerAd!.size.width.toDouble(),
-                height: adService.bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: adService.bannerAd!),
+                width: _adService.bannerAd!.size.width.toDouble(),
+                height: _adService.bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _adService.bannerAd!),
               ),
             ),
         ],

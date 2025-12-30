@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-class AdService {
+class AdService extends ChangeNotifier {
   static AdService? _instance;
   static AdService get instance => _instance ??= AdService._();
   
@@ -60,6 +60,7 @@ class AdService {
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           _isBannerAdLoaded = true;
+          notifyListeners(); // Notify UI to rebuild
           debugPrint('Banner ad loaded');
         },
         onAdFailedToLoad: (ad, error) {
@@ -127,9 +128,10 @@ class AdService {
   }
 
   /// Dispose ads
+  @override
   void dispose() {
     _bannerAd?.dispose();
     _interstitialAd?.dispose();
+    super.dispose();
   }
 }
-
