@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  String? _lastSyncedWord;
 
   @override
   void initState() {
@@ -31,6 +32,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       curve: Curves.easeOut,
     );
     _animationController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Sync search bar with provider's current search word
+    _syncSearchBar();
+  }
+
+  void _syncSearchBar() {
+    final provider = context.read<DictionaryProvider>();
+    final currentWord = provider.currentSearchWord;
+    
+    // Only update if the word changed and is different from what's in the controller
+    if (currentWord != null && 
+        currentWord != _lastSyncedWord && 
+        currentWord != _searchController.text) {
+      _searchController.text = currentWord;
+      _lastSyncedWord = currentWord;
+    } else if (currentWord == null && _lastSyncedWord != null) {
+      _searchController.clear();
+      _lastSyncedWord = null;
+    }
   }
 
   @override
@@ -55,6 +79,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    
+    // Sync search bar when provider changes (e.g., from Hangman lookup)
+    final provider = context.watch<DictionaryProvider>();
+    if (provider.currentSearchWord != null && 
+        provider.currentSearchWord != _searchController.text) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && provider.currentSearchWord != _searchController.text) {
+          _searchController.text = provider.currentSearchWord!;
+        }
+      });
+    }
 
     return Scaffold(
       body: SafeArea(

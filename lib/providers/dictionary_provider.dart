@@ -23,6 +23,7 @@ class DictionaryProvider extends ChangeNotifier {
   WordEntry? _wordOfTheDay;
   bool _isInitialized = false;
   List<String> _suggestions = [];
+  String? _currentSearchWord;
   
   // Image-related state
   List<PixabayImage> _images = [];
@@ -37,6 +38,7 @@ class DictionaryProvider extends ChangeNotifier {
   WordEntry? get wordOfTheDay => _wordOfTheDay;
   bool get isInitialized => _isInitialized;
   List<String> get suggestions => _suggestions;
+  String? get currentSearchWord => _currentSearchWord;
   
   // Image getters
   List<PixabayImage> get images => _images;
@@ -108,6 +110,7 @@ class DictionaryProvider extends ChangeNotifier {
     _errorMessage = '';
     _suggestions = []; // Clear suggestions when searching
     _images = []; // Clear previous images
+    _currentSearchWord = word.trim();
     _currentImageSearchWord = word.trim();
     notifyListeners();
 
@@ -153,6 +156,7 @@ class DictionaryProvider extends ChangeNotifier {
     _currentEntries = [];
     _errorMessage = '';
     _suggestions = [];
+    _currentSearchWord = null;
     _images = [];
     _isLoadingImages = false;
     _currentImageSearchWord = null;
