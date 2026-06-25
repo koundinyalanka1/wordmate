@@ -40,7 +40,7 @@ class _HangmanScreenState extends State<HangmanScreen> {
   // Word cache for instant loading
   final Map<HangmanDifficulty, List<Map<String, String>>> _wordCache = {};
   bool _isCaching = false;
-  Set<String> _usedWords = {}; // Track used words to avoid repeats
+  final Set<String> _usedWords = {}; // Track used words to avoid repeats
 
   @override
   void initState() {
@@ -53,9 +53,11 @@ class _HangmanScreenState extends State<HangmanScreen> {
     setState(() => _isLoading = true);
     await _loadScore();
     await _wordListService.loadWords();
+    if (!mounted) return;
     // Load words for the current difficulty
     final difficulty = context.read<GameSettingsProvider>().difficulty;
     await _wordListService.loadWordsForDifficulty(difficulty);
+    if (!mounted) return;
     await _startNewGame();
   }
 
@@ -82,6 +84,7 @@ class _HangmanScreenState extends State<HangmanScreen> {
 
     // Show interstitial ad every 3rd or 4th game randomly
     await AdService.instance.onNewGame();
+    if (!mounted) return;
 
     // Get difficulty settings
     final difficulty = context.read<GameSettingsProvider>().difficulty;
@@ -455,9 +458,8 @@ class _HangmanScreenState extends State<HangmanScreen> {
         await _wordListService.loadWordsForDifficulty(newDifficulty);
         _startNewGame();
       });
-    } else if (_currentDifficulty == null) {
-      _currentDifficulty = newDifficulty;
     }
+    _currentDifficulty ??= newDifficulty;
 
     return Scaffold(
       body: SafeArea(

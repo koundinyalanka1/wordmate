@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ApplicationExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -17,7 +19,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-android {
+extensions.configure<ApplicationExtension>("android") {
     namespace = "com.english.dictionary.englishdictionary"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -25,10 +27,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -73,8 +71,14 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
     implementation("com.google.firebase:firebase-analytics")
     
     // Play Feature Delivery (replaces deprecated play-core for SDK 34+)

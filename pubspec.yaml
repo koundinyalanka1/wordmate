@@ -4,33 +4,34 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.4
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
     sdk: flutter
   
   # HTTP client for API calls
-  http: ^1.2.0
+  http: ^1.6.0
   
   # Local storage for favorites and history
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.5
   
   # State management
-  provider: ^6.1.1
+  provider: ^6.1.5
   
   # Text-to-Speech for word pronunciation
-  flutter_tts: ^4.2.0
+  flutter_tts: ^4.2.5
   
   # Google AdMob for monetization
-  google_mobile_ads: ^7.0.0
+  google_mobile_ads: ^9.0.0
   
   # Google Fonts for beautiful typography
-  google_fonts: ^6.1.0
+  google_fonts: ^8.1.0
   
   # Firebase
-  firebase_core: ^4.3.0
-  firebase_analytics: ^12.1.0
+  firebase_core: ^4.11.0
+  firebase_analytics: ^12.4.3
 
 dev_dependencies:
   flutter_test:
@@ -41,8 +42,4 @@ flutter:
   uses-material-design: true
   
   assets:
-    - assets/words.txt
-    - assets/easy.txt
-    - assets/medium.txt
-    - assets/hard.txt
-    - assets/config.json
+    - assets/
